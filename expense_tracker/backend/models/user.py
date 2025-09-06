@@ -17,7 +17,7 @@ class User(UserMixin, db.Model):
     
     # Get expenses paid by this user
     def get_expenses_paid(self):
-        from expense_tracker.backend.models.expense import Expense
+        from .expense import Expense
         return Expense.query.filter(Expense.payer_id == str(self.id)).all()
     
     def set_password(self, password):
@@ -32,7 +32,7 @@ class User(UserMixin, db.Model):
     
     def get_trips(self):
         """Get all trips where user is a participant or admin"""
-        from expense_tracker.backend.models.trip import Trip
+        from .trip import Trip
         admin_trips = Trip.query.filter_by(admin_id=self.id).all()
         # Find trips where user is a participant (stored in JSON field)
         participant_trips = Trip.query.filter(Trip.participants.contains(str(self.id))).all()

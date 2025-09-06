@@ -50,6 +50,15 @@ class Trip(db.Model):
             return []
         return json.loads(self.unregistered_participants)
     
+    def get_unregistered_participants_display(self):
+        """Get unregistered participants with names in title case for display"""
+        participants = self.get_unregistered_participants()
+        return [name.title() for name in participants]
+    
+    def get_unregistered_participant_display_name(self, name):
+        """Convert a stored lowercase name to title case for display"""
+        return name.title()
+    
     def set_unregistered_participants(self, participants):
         """Convert list of unregistered participant names to JSON string"""
         self.unregistered_participants = json.dumps(participants)
@@ -70,8 +79,10 @@ class Trip(db.Model):
     def add_unregistered_participant(self, name):
         """Add an unregistered participant by name to the trip"""
         participants = self.get_unregistered_participants()
-        if name.strip() and name not in participants:
-            participants.append(name)
+        # Convert name to lowercase for storage but check against original case
+        name_lower = name.strip().lower()
+        if name_lower and name_lower not in [p.lower() for p in participants]:
+            participants.append(name_lower)
             self.set_unregistered_participants(participants)
             return True
         return False

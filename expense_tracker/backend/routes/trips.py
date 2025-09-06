@@ -101,8 +101,22 @@ def view_trip(trip_id):
             participant_ids.append(str(trip.admin_id))
         
         # Get registered participants
-        registered_participants = User.query.filter(User.id.in_([int(pid) for pid in participant_ids])).all()
+        registered_participants = User.query.filter(User.id.in_([int(pid) for pid in participant_ids if pid.isdigit()])).all()
         user_map = {str(user.id): user.name for user in registered_participants}
+        
+        # Add unregistered participants to user_map (use display names)
+        unregistered_names = trip.get_unregistered_participants_display()
+        for name in unregistered_names:
+            # Use a consistent key format for unregistered participants
+            user_map[f'unregistered_{name.lower()}'] = name
+        
+        # Also add any unregistered participants that might be in expenses
+        expense_payers = [str(e.payer_id) for e in expenses]
+        for payer_id in expense_payers:
+            if payer_id.startswith('unregistered_'):
+                name = payer_id.replace('unregistered_', '')
+                if payer_id not in user_map:
+                    user_map[payer_id] = name
         
         # Create participant objects for display (both registered and unregistered)
         participants = []
@@ -115,16 +129,16 @@ def view_trip(trip_id):
                 'type': 'registered'
             })
         
-        # Add unregistered participants
-        unregistered_names = trip.get_unregistered_participants()
+        # Add unregistered participants (use display names)
+        unregistered_names = trip.get_unregistered_participants_display()
         for name in unregistered_names:
             participants.append({
-                'id': f'unreg_{name}',
-                'name': name,
+                'id': f'unreg_{name.lower()}',  # Store with lowercase ID for consistency
+                'name': name,  # Display name is already in title case
                 'type': 'unregistered'
             })
             # Also add to user_map for settlements display
-            user_map[f'unreg_{name}'] = name
+            user_map[f'unreg_{name.lower()}'] = name
         
         # Calculate total expenses
         total_expenses = trip.calculate_total_expenses()
@@ -240,12 +254,15 @@ def manage_participants(trip_id):
         elif action == 'add_unregistered':
             name = request.form.get('name')
             
-            # Add unregistered participant by name
+            # Add unregistered participant by name (convert to lowercase for storage)
             if trip.add_unregistered_participant(name):
                 db.session.commit()
-                flash(f'Added {name} to the trip', 'success')
+                # Display name in title case
+                display_name = name.strip().title()
+                flash(f'Added {display_name} to the trip', 'success')
             else:
-                flash(f'{name} is already a participant or the name is invalid', 'info')
+                display_name = name.strip().title()
+                flash(f'{display_name} is already a participant or the name is invalid', 'info')
         
         elif action == 'remove_registered':
             user_id = request.form.get('user_id')
@@ -274,15 +291,33 @@ def manage_participants(trip_id):
             # Find user by email
             user = User.query.filter_by(email=email).first()
             if not user:
-                flash(f'No user found with email: {email}', 'error')
-                return redirect(url_for('trips.manage_participants', trip_id=trip_id))
+                # Check if this is an AJAX request
+                if request.headers.get('Content-Type') == 'application/json':
+                    return jsonify({'success': False, 'message': f'No user found with email: {email}'}), 404
+                else:
+                    flash(f'No user found with email: {email}', 'error')
+                    return redirect(url_for('trips.manage_participants', trip_id=trip_id))
             
             # Link unregistered participant to user
             if trip.link_participant(name, user.id):
                 db.session.commit()
-                flash(f'Linked {name} to user {user.name}', 'success')
+                # Check if this is an AJAX request
+                if request.headers.get('Content-Type') == 'application/json':
+                    return jsonify({'success': True, 'message': f'Linked {name} to user {user.name}'})
+                else:
+                    flash(f'Linked {name} to user {user.name}', 'success')
             else:
-                flash(f'Failed to link {name} to user {user.name}', 'error')
+                # Check if this is an AJAX request
+                if request.headers.get('Content-Type') == 'application/json':
+                    return jsonify({'success': False, 'message': f'Failed to link {name} to user {user.name}'}), 400
+                else:
+                    flash(f'Failed to link {name} to user {user.name}', 'error')
+        
+        # For AJAX requests, return JSON response
+        if request.headers.get('Content-Type') == 'application/json':
+            # Get updated list of unregistered participants
+            unregistered_participants = trip.get_unregistered_participants_display()
+            return jsonify({'success': True, 'message': 'Operation completed', 'unregistered_participants': unregistered_participants})
         
         return redirect(url_for('trips.manage_participants', trip_id=trip_id))
     
@@ -290,8 +325,8 @@ def manage_participants(trip_id):
     participant_ids = trip.get_participants_list()
     participants = User.query.filter(User.id.in_([int(pid) for pid in participant_ids if pid.isdigit()])).all()
     
-    # Get unregistered participants
-    unregistered_participants = trip.get_unregistered_participants()
+    # Get unregistered participants (use display names)
+    unregistered_participants = trip.get_unregistered_participants_display()
     
     return render_template('trips/manage_participants.html', 
                           trip=trip,
@@ -335,8 +370,8 @@ def manage_advances(trip_id):
         registered_participants.append(admin)
         registered_map[str(admin.id)] = admin
     
-    # Get unregistered participants
-    unregistered_participants = trip.get_unregistered_participants()
+    # Get unregistered participants (use display names)
+    unregistered_participants = trip.get_unregistered_participants_display()
     
     # Get current advances
     advances = trip.get_advances()
@@ -368,8 +403,10 @@ def manage_advances(trip_id):
                 # Determine participant name for the flash message
                 if participant_id.startswith('unregistered_'):
                     name = participant_id.replace('unregistered_', '')
+                    # Display name in title case
+                    display_name = trip.get_unregistered_participant_display_name(name)
                     print(f"Detected unregistered participant with name: {name}")
-                    flash(f'Added advance payment of ₹{amount} for {name}', 'success')
+                    flash(f'Added advance payment of ₹{amount} for {display_name}', 'success')
                 else:
                     user = registered_map.get(participant_id)
                     name = user.name if user else 'Unknown'
@@ -405,7 +442,9 @@ def manage_advances(trip_id):
                 # Determine participant name for the flash message
                 if participant_id.startswith('unregistered_'):
                     name = participant_id.replace('unregistered_', '')
-                    flash(f'Updated advance payment for {name} by ₹{amount_difference}', 'success')
+                    # Display name in title case
+                    display_name = trip.get_unregistered_participant_display_name(name)
+                    flash(f'Updated advance payment for {display_name} by ₹{amount_difference}', 'success')
                 else:
                     user = registered_map.get(participant_id)
                     name = user.name if user else 'Unknown'
@@ -440,7 +479,9 @@ def manage_advances(trip_id):
                 # Determine participant name for the flash message
                 if participant_id.startswith('unregistered_'):
                     name = participant_id.replace('unregistered_', '')
-                    flash(f'Deleted advance payment for {name}', 'success')
+                    # Display name in title case
+                    display_name = trip.get_unregistered_participant_display_name(name)
+                    flash(f'Deleted advance payment for {display_name}', 'success')
                 else:
                     user = registered_map.get(participant_id)
                     name = user.name if user else 'Unknown'
@@ -462,9 +503,11 @@ def manage_advances(trip_id):
     for participant_id, amount in advances.items():
         if participant_id.startswith('unregistered_'):
             name = participant_id.replace('unregistered_', '')
+            # Display name in title case
+            display_name = trip.get_unregistered_participant_display_name(name)
             formatted_advances.append({
                 'id': participant_id,
-                'name': name,
+                'name': display_name,
                 'type': 'unregistered',
                 'amount': amount
             })
@@ -507,8 +550,8 @@ def manage_payments(trip_id):
         registered_participants.append(admin)
         registered_map[str(admin.id)] = admin
     
-    # Get unregistered participants
-    unregistered_participants = trip.get_unregistered_participants()
+    # Get unregistered participants (use display names)
+    unregistered_participants = trip.get_unregistered_participants_display()
     
     # Get current payments
     payments = trip.get_general_payments()
@@ -570,9 +613,11 @@ def manage_payments(trip_id):
         # Format the payment for display
         if participant_id.startswith('unregistered_'):
             name = participant_id.replace('unregistered_', '')
+            # Display name in title case
+            display_name = trip.get_unregistered_participant_display_name(name)
             formatted_payments.append({
                 'id': participant_id,
-                'name': name,
+                'name': display_name,
                 'type': 'unregistered',
                 'amount': payment_amount,
                 'description': description,
@@ -636,7 +681,9 @@ def manage_payments(trip_id):
                 # Determine participant name for the flash message
                 if participant_id.startswith('unregistered_'):
                     name = participant_id.replace('unregistered_', '')
-                    flash(f'Added payment of ₹{amount} for {name}', 'success')
+                    # Display name in title case
+                    display_name = trip.get_unregistered_participant_display_name(name)
+                    flash(f'Added payment of ₹{amount} for {display_name}', 'success')
                 else:
                     user = registered_map.get(participant_id)
                     name = user.name if user else 'Unknown'
@@ -781,10 +828,10 @@ def view_settlements(trip_id):
         total_share[participant_id] = total_paid_amount - balance
     
     # Also calculate for unregistered participants
-    unregistered_participants = trip.get_unregistered_participants()
+    unregistered_participants = trip.get_unregistered_participants_display()
     for name in unregistered_participants:
-        # Create a unique ID for the unregistered participant
-        unregistered_id = f'unregistered_{name}'
+        # Create a unique ID for the unregistered participant (using lowercase for consistency)
+        unregistered_id = f'unregistered_{name.lower()}'
         
         # Calculate balance
         balance = trip.calculate_user_balance(unregistered_id)

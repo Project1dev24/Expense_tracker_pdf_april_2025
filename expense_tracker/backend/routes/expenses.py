@@ -19,12 +19,28 @@ def list_expenses(trip_id):
     participants = trip.get_participants_list()
     if str(current_user.id) not in participants and current_user.id != trip.admin_id:
         flash('You do not have access to this trip', 'error')
-        return redirect(url_for('trips.list_trips'))
+        return redirect(url_url_for('trips.list_trips'))
     
     expenses = Expense.query.filter_by(trip_id=trip_id).order_by(Expense.date.desc()).all()
     
-    # Get user names for display
+    # Get user names for display - improved version
     user_map = {str(user.id): user.name for user in User.query.all()}
+    
+    # Also add unregistered participants to user_map (use display names)
+    unregistered_names = trip.get_unregistered_participants_display()
+    for name in unregistered_names:
+        # Use a consistent key format for unregistered participants (lowercase for storage)
+        user_map[f'unregistered_{name.lower()}'] = name
+    
+    # Also add any unregistered participants that might be in expenses
+    expense_payers = [str(e.payer_id) for e in expenses]
+    for payer_id in expense_payers:
+        if payer_id.startswith('unregistered_'):
+            name = payer_id.replace('unregistered_', '')
+            # Display name in title case
+            display_name = trip.get_unregistered_participant_display_name(name)
+            if payer_id not in user_map:
+                user_map[payer_id] = display_name
     
     return render_template('expenses/list.html', 
                           trip=trip, 
@@ -283,8 +299,8 @@ def add_expense(trip_id):
         if admin:
             all_participants.append(admin)
             
-    # Get unregistered participants
-    unregistered_names = trip.get_unregistered_participants()
+    # Get unregistered participants (use display names)
+    unregistered_names = trip.get_unregistered_participants_display()
     
     return render_template('expenses/add.html', 
                           trip=trip, 
@@ -319,8 +335,10 @@ def view_expense(trip_id, expense_id):
         # Special case for group payment
         payer_info = {'id': 'group_everyone', 'name': 'Everyone (Group Payment)', 'type': 'group'}
     elif payer_id_str.startswith('unregistered_'):
-        payer_name = payer_id_str.replace('unregistered_', '')
-        payer_info = {'id': payer_id_str, 'name': payer_name, 'type': 'unregistered'}
+        name = payer_id_str.replace('unregistered_', '')
+        # Display name in title case
+        display_name = name.title()
+        payer_info = {'id': payer_id_str, 'name': display_name, 'type': 'unregistered'}
     else:
         try:
             payer = User.query.get(int(expense.payer_id))
@@ -540,80 +558,17 @@ def edit_expense(trip_id, expense_id):
     expense_participant_ids = expense.get_participants_list()
     expense_participant_ids = [str(pid) for pid in expense_participant_ids]  # Convert to strings for comparison
     
-    # Get unregistered participants from the expense
-    unregistered_participants = []
-    try:
-        items_data = expense.get_items()
-        if isinstance(items_data, dict) and 'unregistered_participants' in items_data:
-            unregistered_participants = items_data['unregistered_participants']
-    except Exception as e:
-        print(f"Error parsing unregistered participants: {e}")
-    
-    # Get all unregistered participants from the trip
-    trip_unregistered = trip.get_unregistered_participants()
-    
-    # Format date for the form
-    expense_date = expense.date.strftime('%Y-%m-%d')
-    
-    # Get shares data for exact split
-    shares_data = {}
-    try:
-        if expense.split_method == 'exact':
-            shares_data = expense.get_shares()
-    except Exception as e:
-        print(f"Error parsing shares: {e}")
-    
-    # Get items data for itemized split
-    items_data = []
-    try:
-        if expense.split_method == 'itemized':
-            print(f"Processing itemized split expense...")
-            print(f"Raw items from expense: {expense.items}")
-            items = expense.get_items()
-            print(f"Parsed items: {items}")
-            
-            # Handle both dictionary and list formats
-            if isinstance(items, dict):
-                if 'items' in items:
-                    items_data = items['items']
-                    print(f"Found items in dictionary: {items_data}")
-                else:
-                    # If no 'items' key but the dict contains item-like entries
-                    if any(key in items for key in ['name', 'price', 'participants']):
-                        items_data = [items]
-                    print(f"Using dictionary as single item: {items_data}")
-            elif isinstance(items, list):
-                items_data = items
-                print(f"Using items list directly: {items_data}")
-            
-            # Ensure each item has the required fields
-            items_data = [{
-                'name': item.get('name', ''),
-                'price': float(item.get('price', 0)),
-                'participants': item.get('participants', []),
-                'unregistered': item.get('unregistered', [])
-            } for item in items_data]
-            
-            print(f"Final processed items_data: {items_data}")
-    except Exception as e:
-        print(f"Error parsing items: {e}")
-        import traceback
-        print(traceback.format_exc())
-    
-    print(f"Expense participants: {expense_participant_ids}")
-    print(f"Expense unregistered participants: {unregistered_participants}")
+    # Get all unregistered participants from the trip (not just those in the expense)
+    unregistered_participants = trip.get_unregistered_participants_display()
     
     return render_template('expenses/edit.html', 
                           trip=trip, 
                           expense=expense,
-                          expense_date=expense_date,
                           participants=all_participants,
                           expense_participant_ids=expense_participant_ids,
                           unregistered_participants=unregistered_participants,
-                          trip_unregistered=trip_unregistered,
-                          shares_data=shares_data,
-                          items_data=items_data,
                           split_methods=Config.SPLIT_METHODS)
+
 
 @bp.route('/<int:trip_id>/expenses/<int:expense_id>/delete', methods=['POST'])
 @login_required
@@ -627,10 +582,19 @@ def delete_expense(trip_id, expense_id):
         return redirect(url_for('expenses.list_expenses', trip_id=trip_id))
     
     # Check if user is the payer or trip admin
-    if expense.payer_id != current_user.id and trip.admin_id != current_user.id:
+    is_payer = False
+    try:
+        # Check if current user is the payer (handle both string and int comparisons)
+        if str(expense.payer_id) == str(current_user.id):
+            is_payer = True
+    except:
+        pass
+        
+    if not is_payer and trip.admin_id != current_user.id:
         flash('You do not have permission to delete this expense', 'error')
         return redirect(url_for('expenses.view_expense', trip_id=trip_id, expense_id=expense_id))
     
+    # Delete the expense
     db.session.delete(expense)
     db.session.commit()
     

@@ -3,6 +3,8 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from expense_tracker.backend.models.user import User
 from expense_tracker.backend.database import db
+import secrets
+import datetime
 
 bp = Blueprint('auth', __name__)
 
@@ -133,3 +135,69 @@ def change_password():
         return redirect(url_for('auth.profile'))
     
     return render_template('auth/change_password.html')
+
+@bp.route('/reset-password', methods=['GET', 'POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email')
+        
+        # Validate input
+        if not email:
+            flash('Email is required', 'error')
+            return render_template('auth/reset_password_request.html')
+        
+        # Find user by email
+        user = User.query.filter_by(email=email).first()
+        if user:
+            # In a real application, you would send an email with a reset link
+            # For this example, we'll just show the reset form directly
+            flash('Check your email for password reset instructions', 'info')
+            # For demo purposes, we'll redirect to the reset form directly
+            return redirect(url_for('auth.reset_password', user_id=user.id))
+        else:
+            # For security, don't reveal if email exists or not
+            flash('Check your email for password reset instructions', 'info')
+            return render_template('auth/reset_password_request.html')
+    
+    return render_template('auth/reset_password_request.html')
+
+@bp.route('/reset-password/<int:user_id>', methods=['GET', 'POST'])
+def reset_password(user_id):
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    
+    # Find user by ID
+    user = User.query.get(user_id)
+    if not user:
+        flash('Invalid password reset request', 'error')
+        return redirect(url_for('auth.login'))
+    
+    if request.method == 'POST':
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validate input
+        if not new_password or not confirm_password:
+            flash('All fields are required', 'error')
+            return render_template('auth/reset_password.html', user_id=user_id)
+        
+        if new_password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return render_template('auth/reset_password.html', user_id=user_id)
+        
+        # Validate password strength
+        if len(new_password) < 8:
+            flash('Password must be at least 8 characters long', 'error')
+            return render_template('auth/reset_password.html', user_id=user_id)
+        
+        # Update password
+        user.set_password(new_password)
+        db.session.commit()
+        
+        flash('Password reset successfully! You can now log in with your new password.', 'success')
+        return redirect(url_for('auth.login'))
+    
+    return render_template('auth/reset_password.html', user_id=user_id)

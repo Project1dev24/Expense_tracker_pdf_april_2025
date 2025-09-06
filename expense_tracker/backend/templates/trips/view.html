@@ -147,9 +147,16 @@
                             {% if expense.payer_id == current_user.id %}
                             <span class="badge bg-primary">You</span>
                             {% else %}
-                            <span class="badge bg-success">{{ user_map.get(expense.payer_id|string, 'Unknown') }}</span>
+                            {% set payer_id_str = expense.payer_id|string %}
+                            {% if payer_id_str == 'group_everyone' %}
+                            <span class="badge bg-warning">Everyone (Group Payment)</span>
+                            {% elif payer_id_str.startswith('unregistered_') %}
+                            <span class="badge bg-info">{{ user_map.get(payer_id_str, payer_id_str.replace('unregistered_', '')) }}</span>
+                            <small class="d-block text-muted mt-1">Unregistered</small>
+                            {% else %}
+                            <span class="badge bg-success">{{ user_map.get(payer_id_str, 'Unknown') }}</span>
                             {% endif %}
-                            <small class="d-block text-muted mt-1">Paid by</small>
+                            {% endif %}
                         </td>
                         <td>
                             {% if expense.split_method == 'equal' %}
@@ -205,7 +212,7 @@
                                     <div>
                                         <strong>
                                         {% if settlement.from_user.startswith('unregistered_') %}
-                                            {{ settlement.from_user.replace('unregistered_', '') }} <span class="badge bg-info">unregistered</span>
+                                            {{ user_map.get(settlement.from_user, settlement.from_user.replace('unregistered_', '')) }} <span class="badge bg-info">unregistered</span>
                                         {% else %}
                                             {{ user_map.get(settlement.from_user, 'Unknown') }}
                                         {% endif %}
@@ -213,7 +220,7 @@
                                         <i class="fas fa-arrow-right mx-2"></i>
                                         <strong>
                                         {% if settlement.to_user.startswith('unregistered_') %}
-                                            {{ settlement.to_user.replace('unregistered_', '') }} <span class="badge bg-info">unregistered</span>
+                                            {{ user_map.get(settlement.to_user, settlement.to_user.replace('unregistered_', '')) }} <span class="badge bg-info">unregistered</span>
                                         {% else %}
                                             {{ user_map.get(settlement.to_user, 'Unknown') }}
                                         {% endif %}

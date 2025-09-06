@@ -6,6 +6,16 @@
 <div class="container mt-4">
     <h1>Manage Participants - {{ trip.name }}</h1>
     
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
     <div class="card mb-4">
         <div class="card-header">
             <h5>Add Registered Participant</h5>
@@ -97,44 +107,18 @@
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li>
-                                        <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#linkModal{{ loop.index }}">
+                                        <button type="button" class="dropdown-item" onclick="showLinkModal('{{ name }}')">
                                             Link to User
                                         </button>
                                     </li>
                                     <li>
                                         <form method="POST">
                                             <input type="hidden" name="action" value="remove_unregistered">
-                                            <input type="hidden" name="name" value="{{ name }}">
+                                            <input type="hidden" name="name" value="{{ name.lower() }}">
                                             <button type="submit" class="dropdown-item text-danger">Remove</button>
                                         </form>
                                     </li>
                                 </ul>
-                            </div>
-                            
-                            <!-- Link Modal -->
-                            <div class="modal fade" id="linkModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Link {{ name }} to User</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <form method="POST">
-                                                <input type="hidden" name="action" value="link_participant">
-                                                <input type="hidden" name="name" value="{{ name }}">
-                                                <div class="form-group">
-                                                    <label for="email_link">User Email:</label>
-                                                    <input type="email" class="form-control" id="email_link" name="email" required>
-                                                </div>
-                                                <div class="mt-3 text-end">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                    <button type="submit" class="btn btn-primary">Link User</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </td>
                     </tr>
@@ -148,8 +132,181 @@
         </div>
     </div>
     
+    <!-- Single Link Modal -->
+    <div class="modal fade" id="linkModal" tabindex="-1" aria-labelledby="linkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="linkModalLabel">Link Participant to User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="linkModalAlert" class="alert d-none" role="alert"></div>
+                    <form method="POST" id="linkForm">
+                        <input type="hidden" name="action" value="link_participant">
+                        <input type="hidden" name="name" id="participantName">
+                        <div class="form-group">
+                            <label for="email_link">User Email:</label>
+                            <input type="email" class="form-control" id="email_link" name="email" required>
+                        </div>
+                        <div class="mt-3 text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="linkSubmitBtn">Link User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="mt-3">
         <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-secondary">Back to Trip</a>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Function to show link modal with participant details
+function showLinkModal(name) {
+    // Set the participant name in the modal
+    document.getElementById('participantName').value = name;
+    document.getElementById('linkModalLabel').textContent = 'Link ' + name + ' to User';
+    
+    // Clear any previous alerts
+    const alert = document.getElementById('linkModalAlert');
+    alert.classList.add('d-none');
+    
+    // Clear email input
+    document.getElementById('email_link').value = '';
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('linkModal'));
+    modal.show();
+}
+
+// Handle form submission via AJAX
+document.addEventListener('DOMContentLoaded', function() {
+    const linkForm = document.getElementById('linkForm');
+    const linkSubmitBtn = document.getElementById('linkSubmitBtn');
+    
+    linkForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const formData = new FormData(linkForm);
+        const action = formData.get('action');
+        const name = formData.get('name');
+        const email = formData.get('email');
+        
+        // Disable submit button and show loading state
+        linkSubmitBtn.disabled = true;
+        linkSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Linking...';
+        
+        // Send AJAX request
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: action,
+                name: name,
+                email: email
+            })
+        })
+        .then(response => {
+            // Check if response is successful
+            if (!response.ok) {
+                // If not successful, parse the JSON error response
+                return response.json().then(errorData => {
+                    throw new Error(JSON.stringify(errorData));
+                });
+            }
+            // If successful, parse the JSON response normally
+            return response.json();
+        })
+        .then(data => {
+            const alert = document.getElementById('linkModalAlert');
+            
+            if (data.success) {
+                // Show success message
+                alert.className = 'alert alert-success d-block';
+                alert.textContent = data.message;
+                
+                // Close modal after a short delay
+                setTimeout(function() {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('linkModal'));
+                    modal.hide();
+                    
+                    // Reload the page to reflect changes
+                    location.reload();
+                }, 1500);
+            } else {
+                // Show error message
+                alert.className = 'alert alert-danger d-block';
+                alert.textContent = data.message;
+                
+                // Re-enable submit button
+                linkSubmitBtn.disabled = false;
+                linkSubmitBtn.innerHTML = 'Link User';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Show error message
+            const alert = document.getElementById('linkModalAlert');
+            alert.className = 'alert alert-danger d-block';
+            
+            try {
+                // Try to parse the error as JSON
+                const errorData = JSON.parse(error.message);
+                alert.textContent = errorData.message || 'An error occurred. Please try again.';
+            } catch (e) {
+                // If parsing fails, show a generic error message
+                alert.textContent = 'An error occurred. Please try again.';
+            }
+            
+            // Re-enable submit button
+            linkSubmitBtn.disabled = false;
+            linkSubmitBtn.innerHTML = 'Link User';
+        });
+    });
+    
+    // Prevent modal backdrop issues
+    document.getElementById('linkModal').addEventListener('show.bs.modal', function() {
+        // Remove any existing backdrops
+        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+            backdrop.remove();
+        });
+    });
+    
+    // Ensure proper backdrop when modal is fully shown
+    document.getElementById('linkModal').addEventListener('shown.bs.modal', function() {
+        // Add backdrop if missing
+        if (document.querySelectorAll('.modal-backdrop').length === 0) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            document.body.appendChild(backdrop);
+        }
+    });
+    
+    // Clean up backdrop when modal is hidden
+    document.getElementById('linkModal').addEventListener('hidden.bs.modal', function() {
+        // Remove backdrop
+        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+            backdrop.remove();
+        });
+        
+        // Reset body styles
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        
+        // Clear any alerts
+        const alert = document.getElementById('linkModalAlert');
+        alert.classList.add('d-none');
+    });
+});
+</script>
 {% endblock %}

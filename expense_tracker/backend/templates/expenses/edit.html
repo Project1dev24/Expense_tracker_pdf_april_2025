@@ -55,10 +55,10 @@
                                 </optgroup>
                                 
                                 <!-- Unregistered participants -->
-                                {% if trip_unregistered %}
+                                {% if unregistered_participants %}
                                 <optgroup label="Unregistered Participants">
-                                    {% for name in trip_unregistered %}
-                                    <option value="unregistered_{{ name }}" {% if expense.payer_id == 'unregistered_' + name %}selected{% endif %}>
+                                    {% for name in unregistered_participants %}
+                                    <option value="unregistered_{{ name.lower() }}" {% if expense.payer_id == 'unregistered_' + name.lower() %}selected{% endif %}>
                                         {{ name }} (Unregistered)
                                     </option>
                                     {% endfor %}
@@ -130,17 +130,17 @@
                                     {% endif %}
                                     
                                     <!-- Unregistered Participants -->
-                                    {% if trip_unregistered %}
+                                    {% if unregistered_participants %}
                                     <div class="col-12 mt-3 mb-2">
                                         <h6>Unregistered Participants</h6>
                                     </div>
-                                    {% for name in trip_unregistered %}
+                                    {% for name in unregistered_participants %}
                                     <div class="col-md-4 mb-2">
                                         <div class="form-check">
                                             <input class="form-check-input participant-checkbox" type="checkbox" 
-                                                   name="unregistered_participants" value="{{ name }}" 
+                                                   name="unregistered_participants" value="{{ name.lower() }}" 
                                                    id="unregistered{{ loop.index }}"
-                                                   {% if name in unregistered_participants %}checked{% endif %}>
+                                                   {% if name.lower() in expense.get_unregistered_participants() %}checked{% endif %}>
                                             <label class="form-check-label" for="unregistered{{ loop.index }}">
                                                 {{ name }}
                                                 <span class="badge bg-secondary">Unregistered</span>
