@@ -79,7 +79,7 @@
                                 <a href="{{ url_for('expenses.edit_expense', trip_id=trip.id, expense_id=expense.id) }}" class="btn btn-outline-primary">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="btn btn-outline-danger" onclick="showDeleteModal({{ expense.id }}, '{{ expense.description|e }}', {{ expense.amount }}, {{ trip.id }})">
+                                <button type="button" class="btn btn-outline-danger" onclick="showDeleteModal({{ expense.id }}, '{{ expense.description|e }}', {{ expense.amount }}, {{ trip.id }})" title="Delete Expense">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 {% endif %}
