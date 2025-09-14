@@ -211,8 +211,13 @@ class Expense(db.Model):
                 else:
                     shares[participant] = per_person
             
-            # We don't need to track unregistered participants' shares here
-            # as they're stored in the items field
+            # Add shares for unregistered participants
+            for name in item_unregistered:
+                unregistered_id = f'unregistered_{name}'
+                if unregistered_id in shares:
+                    shares[unregistered_id] = round(shares[unregistered_id] + per_person, 2)
+                else:
+                    shares[unregistered_id] = per_person
         
         # Validate that sum of shares equals the expense amount
         total = sum(shares.values())

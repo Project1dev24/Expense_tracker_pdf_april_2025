@@ -287,6 +287,9 @@ def add_expense(trip_id):
             # Commit changes to the database
             db.session.commit()
             
+            # Recalculate all balances to ensure consistency
+            balances = trip.recalculate_all_balances()
+            
             # Detailed debugging after successful save
             print("Expense saved successfully!")
             print(f"Expense ID: {expense.id}")
@@ -608,6 +611,9 @@ def edit_expense(trip_id, expense_id):
         
         db.session.commit()
         
+        # Recalculate all balances to ensure consistency
+        balances = trip.recalculate_all_balances()
+        
         flash('Expense updated successfully', 'success')
         return redirect(url_for('expenses.view_expense', trip_id=trip_id, expense_id=expense_id))
     
@@ -671,6 +677,9 @@ def delete_expense(trip_id, expense_id):
     # Delete the expense
     db.session.delete(expense)
     db.session.commit()
+    
+    # Recalculate all balances to ensure consistency
+    balances = trip.recalculate_all_balances()
     
     flash('Expense deleted successfully', 'success')
     return redirect(url_for('expenses.list_expenses', trip_id=trip_id))

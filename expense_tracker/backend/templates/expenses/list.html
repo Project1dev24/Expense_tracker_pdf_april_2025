@@ -123,9 +123,10 @@ function showDeleteModal(expenseId, description, amount, tripId) {
     document.getElementById('expenseDescription').textContent = description;
     document.getElementById('expenseAmount').textContent = amount.toFixed(2);
     
-    // Set the form action URL
+    // Set the form action URL using Flask's url_for
     const form = document.getElementById('deleteForm');
-    form.action = '/trip/' + tripId + '/expenses/' + expenseId + '/delete';
+    form.action = '{{ url_for("expenses.delete_expense", trip_id=0, expense_id=0) }}'
+        .replace('/0/expenses/0', '/' + tripId + '/expenses/' + expenseId);
     
     // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('deleteModal'));

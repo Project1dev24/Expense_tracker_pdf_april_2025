@@ -274,22 +274,22 @@ class Trip(db.Model):
         # Total paid = advances + general payments
         total_paid = advance_amount + general_payments
         
-        # Calculate their total share
+        # Calculate their total share and what they've paid
         for expense in self.expenses:
             shares = expense.get_shares()
             if unregistered_id in shares:
-                # If they were included in an expense, add their share
-                total_share -= shares[unregistered_id]
+                # If they were included in an expense, add their share (they owe this amount)
+                total_share += shares[unregistered_id]
                 
-            # If they paid for an expense (unlikely but possible), add the amount
+            # If they paid for an expense, add the amount (they are owed this amount)
             if expense.payer_id == unregistered_id:
                 balance += expense.amount
         
-        # Calculate balance: total paid minus their share
+        # Calculate final balance: (what they paid + advances + general payments) - what they owe
         # Positive means they are owed money, negative means they owe money
-        balance += total_share
-        return balance
-    
+        final_balance = (balance + total_paid) - total_share
+        return final_balance
+        
     def get_advances(self):
         """Get the advances dictionary from JSON"""
         if not self.advances_json:
@@ -299,6 +299,29 @@ class Trip(db.Model):
     def set_advances(self, advances):
         """Save the advances dictionary as JSON"""
         self.advances_json = json.dumps(advances)
+        
+    def recalculate_all_balances(self):
+        """Recalculate all participant balances and return a dictionary of balances"""
+        balances = {}
+        
+        # Get all registered participants including admin
+        registered_participants = self.get_participants_list()
+        if str(self.admin_id) not in registered_participants:
+            registered_participants.append(str(self.admin_id))
+            
+        # Calculate balance for each registered participant
+        for participant_id in registered_participants:
+            balance = self.calculate_user_balance(participant_id)
+            balances[participant_id] = balance
+            
+        # Calculate balance for each unregistered participant
+        unregistered_participants = self.get_unregistered_participants()
+        for name in unregistered_participants:
+            unregistered_id = f'unregistered_{name}'
+            balance = self.calculate_unregistered_balance(unregistered_id)
+            balances[unregistered_id] = balance
+            
+        return balances
         
     def add_advance(self, participant_id, amount):
         """Add an advance payment for a participant"""
@@ -513,17 +536,8 @@ class Trip(db.Model):
                 # Create a unique ID for the unregistered participant
                 unregistered_id = f'unregistered_{name}'
                 
-                # Calculate their balance across all expenses
-                balance = 0
-                for expense in self.expenses:
-                    shares = expense.get_shares()
-                    if unregistered_id in shares:
-                        # If they were included in an expense, add their share
-                        balance -= shares[unregistered_id]
-                        
-                    # If they paid for an expense (unlikely but possible), add the amount
-                    if expense.payer_id == unregistered_id:
-                        balance += expense.amount
+                # Calculate their balance using the dedicated method
+                balance = self.calculate_unregistered_balance(unregistered_id)
                 
                 # Only include non-zero balances
                 if abs(balance) > 0.01:

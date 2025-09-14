@@ -632,6 +632,9 @@ def manage_advances(trip_id):
                 trip.add_advance(participant_id, amount)
                 db.session.commit()
                 
+                # Recalculate all balances to ensure consistency
+                balances = trip.recalculate_all_balances()
+                
                 # Determine participant name for the flash message
                 if participant_id.startswith('unregistered_'):
                     name = participant_id.replace('unregistered_', '')
@@ -671,6 +674,9 @@ def manage_advances(trip_id):
                     
                 db.session.commit()
                 
+                # Recalculate all balances to ensure consistency
+                balances = trip.recalculate_all_balances()
+                
                 # Determine participant name for the flash message
                 if participant_id.startswith('unregistered_'):
                     name = participant_id.replace('unregistered_', '')
@@ -707,6 +713,9 @@ def manage_advances(trip_id):
                     return redirect(url_for('trips.manage_advances', trip_id=trip_id))
                     
                 db.session.commit()
+                
+                # Recalculate all balances to ensure consistency
+                balances = trip.recalculate_all_balances()
                 
                 # Determine participant name for the flash message
                 if participant_id.startswith('unregistered_'):
@@ -910,6 +919,9 @@ def manage_payments(trip_id):
                 trip.add_general_payment(participant_id, amount, description, date, expense_id)
                 db.session.commit()
                 
+                # Recalculate all balances to ensure consistency
+                balances = trip.recalculate_all_balances()
+                
                 # Determine participant name for the flash message
                 if participant_id.startswith('unregistered_'):
                     name = participant_id.replace('unregistered_', '')
@@ -949,6 +961,10 @@ def manage_payments(trip_id):
                     return redirect(url_for('trips.manage_payments', trip_id=trip_id))
                     
                 db.session.commit()
+                
+                # Recalculate all balances to ensure consistency
+                balances = trip.recalculate_all_balances()
+                
                 flash('Payment updated successfully', 'success')
                 return redirect(url_for('trips.manage_payments', trip_id=trip_id))
                 
@@ -974,6 +990,10 @@ def manage_payments(trip_id):
                     return redirect(url_for('trips.manage_payments', trip_id=trip_id))
                     
                 db.session.commit()
+                
+                # Recalculate all balances to ensure consistency
+                balances = trip.recalculate_all_balances()
+                
                 flash('Payment deleted successfully', 'success')
                 return redirect(url_for('trips.manage_payments', trip_id=trip_id))
                 
@@ -1026,20 +1046,13 @@ def view_settlements(trip_id):
     total_paid = {}
     total_share = {}
     
-    # Import Expense model
-    from expense_tracker.backend.models.expense import Expense
-    
-    # Get all expenses for this trip, ordered by date (newest first)
-    expenses = Expense.query.filter_by(trip_id=trip.id).order_by(Expense.date.desc()).all()
-    
-    # For each participant, calculate their balance, total paid and total share
+    # For each registered participant, calculate their balance, total paid and total share
     for participant_id in participant_ids:
         # Calculate balance using the existing method
-        balance = trip.calculate_user_balance(int(participant_id))
+        balance = trip.calculate_user_balance(participant_id)
         balances[participant_id] = balance
         
         # Calculate total paid (from expenses + advances + general payments)
-        
         # Sum of expenses paid
         expense_paid = sum(expense.amount for expense in 
                           Expense.query.filter_by(trip_id=trip.id, payer_id=str(participant_id)))
@@ -1057,7 +1070,7 @@ def view_settlements(trip_id):
         
         # Total share is what the participant owes (their share of all expenses)
         total_share_amount = 0
-        for expense in expenses:
+        for expense in trip.expenses:
             shares = expense.get_shares()
             if str(participant_id) in shares:
                 total_share_amount += shares[str(participant_id)]
@@ -1070,8 +1083,8 @@ def view_settlements(trip_id):
         # Create a unique ID for the unregistered participant (using the stored lowercase name)
         unregistered_id = f'unregistered_{name}'
         
-        # Calculate balance
-        balance = trip.calculate_user_balance(unregistered_id)
+        # Calculate balance using the dedicated method
+        balance = trip.calculate_unregistered_balance(unregistered_id)
         balances[unregistered_id] = balance
         
         # Add to user_map for display (using title case for display)
@@ -1088,14 +1101,17 @@ def view_settlements(trip_id):
         total_paid_amount = expense_paid + general_payments + advance_amount
         total_paid[unregistered_id] = total_paid_amount
         
-        # Calculate total share
+        # Calculate total share (what they owe)
         total_share_amount = 0
-        for expense in expenses:
+        for expense in trip.expenses:
             shares = expense.get_shares()
             if unregistered_id in shares:
                 total_share_amount += shares[unregistered_id]
         
         total_share[unregistered_id] = total_share_amount
+    
+    # Get all expenses for this trip, ordered by date (newest first)
+    expenses = Expense.query.filter_by(trip_id=trip.id).order_by(Expense.date.desc()).all()
     
     return render_template('trips/settlements.html', 
                           trip=trip,
@@ -1281,3 +1297,28 @@ def sync_linked_participants(trip_id):
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': f'Error during synchronization: {str(e)}'}), 500
+
+@trips_bp.route('/<int:trip_id>/sync-balances', methods=['POST'])
+@login_required
+def sync_trip_balances(trip_id):
+    """Route to manually sync/refresh all trip balances"""
+    trip = Trip.query.get_or_404(trip_id)
+    
+    # Check if user is the admin
+    if trip.admin_id != current_user.id:
+        flash('You do not have permission to sync this trip', 'error')
+        return redirect(url_for('trips.view_trip', trip_id=trip_id))
+    
+    try:
+        # Recalculate all balances
+        balances = trip.recalculate_all_balances()
+        
+        # Flash a success message
+        flash(f'Successfully synchronized all balances for trip "{trip.name}"', 'success')
+        
+    except Exception as e:
+        # Flash an error message if something goes wrong
+        flash(f'Error synchronizing balances: {str(e)}', 'error')
+    
+    # Redirect back to the trip view
+    return redirect(url_for('trips.view_trip', trip_id=trip_id))
