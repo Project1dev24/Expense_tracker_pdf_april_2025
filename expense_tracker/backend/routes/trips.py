@@ -323,14 +323,28 @@ def manage_participants(trip_id):
                     else:
                         return jsonify({'success': False, 'message': f'{name} is already a participant'}) if request.headers.get('Content-Type') == 'application/json' else flash(f'{name} is already a participant', 'info')
             else:
-                # Treat as name - add as unregistered participant
-                if trip.add_unregistered_participant(participant_input):
-                    db.session.commit()
-                    display_name = participant_input.strip().title()
-                    return jsonify({'success': True, 'message': f'Added {display_name} to the trip as an unregistered participant', 'type': 'unregistered'}) if request.headers.get('Content-Type') == 'application/json' else redirect(url_for('trips.manage_participants', trip_id=trip_id))
+                # Treat as name - first check if a user exists with this name
+                # Convert input to title case for consistent matching
+                name_input = participant_input.strip().title()
+                
+                # Try to find existing user with this name (case-insensitive)
+                user = User.query.filter(func.lower(User.name) == func.lower(name_input)).first()
+                if user:
+                    # User exists with this name, add as registered participant
+                    if trip.add_participant(user.id):
+                        db.session.commit()
+                        return jsonify({'success': True, 'message': f'Added {user.name} to the trip as a registered user', 'type': 'registered'}) if request.headers.get('Content-Type') == 'application/json' else redirect(url_for('trips.manage_participants', trip_id=trip_id))
+                    else:
+                        return jsonify({'success': False, 'message': f'{user.name} is already a participant'}) if request.headers.get('Content-Type') == 'application/json' else flash(f'{user.name} is already a participant', 'info')
                 else:
-                    display_name = participant_input.strip().title()
-                    return jsonify({'success': False, 'message': f'{display_name} is already a participant'}) if request.headers.get('Content-Type') == 'application/json' else flash(f'{display_name} is already a participant', 'info')
+                    # No user exists with this name, add as unregistered participant
+                    if trip.add_unregistered_participant(participant_input):
+                        db.session.commit()
+                        display_name = participant_input.strip().title()
+                        return jsonify({'success': True, 'message': f'Added {display_name} to the trip as an unregistered participant', 'type': 'unregistered'}) if request.headers.get('Content-Type') == 'application/json' else redirect(url_for('trips.manage_participants', trip_id=trip_id))
+                    else:
+                        display_name = participant_input.strip().title()
+                        return jsonify({'success': False, 'message': f'{display_name} is already a participant'}) if request.headers.get('Content-Type') == 'application/json' else flash(f'{display_name} is already a participant', 'info')
         
         elif action == 'remove_registered':
             user_id = request.form.get('user_id')
