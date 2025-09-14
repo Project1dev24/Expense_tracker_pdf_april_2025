@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_login import LoginManager
-from expense_tracker.backend.database import db
-from expense_tracker.backend.config import Config
+from backend.database import db
+from backend.config import Config
 import os
 
 # Initialize Flask-Login
@@ -25,9 +25,10 @@ def init_app():
     
     with app.app_context():
         # Import models to ensure they are registered with SQLAlchemy
-        from expense_tracker.backend.models.user import User
-        from expense_tracker.backend.models.trip import Trip
-        from expense_tracker.backend.models.expense import Expense
+        from backend.models.user import User
+        from backend.models.trip import Trip
+        from backend.models.expense import Expense
+        from backend.models.unregistered_participant import UnregisteredParticipant
         
         # Models are already initialized with db
         
@@ -35,10 +36,10 @@ def init_app():
         db.create_all()
         
         # Register blueprints
-        from expense_tracker.backend.routes.auth import bp as auth_bp
-        from expense_tracker.backend.routes.trips import trips_bp
-        from expense_tracker.backend.routes.expenses import bp as expenses_bp
-        from expense_tracker.backend.routes.main import bp as main_bp
+        from backend.routes.auth import bp as auth_bp
+        from backend.routes.trips import trips_bp
+        from backend.routes.expenses import bp as expenses_bp
+        from backend.routes.main import bp as main_bp
         
         # Register blueprints with proper URL prefixes
         app.register_blueprint(auth_bp, url_prefix='/auth')

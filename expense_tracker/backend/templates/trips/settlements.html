@@ -44,8 +44,22 @@
                         <tbody>
                             {% for settlement in settlements %}
                             <tr>
-                                <td>{{ user_map.get(settlement.from_user, 'Unknown') }}</td>
-                                <td>{{ user_map.get(settlement.to_user, 'Unknown') }}</td>
+                                <td>
+                                    {% if (settlement.from_user|string).startswith('unregistered_') %}
+                                        {{ user_map.get(settlement.from_user, (settlement.from_user|string)|replace('unregistered_', '')) }}
+                                        <span class="badge bg-info">unregistered</span>
+                                    {% else %}
+                                        {{ user_map.get(settlement.from_user, 'Unknown') }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if (settlement.to_user|string).startswith('unregistered_') %}
+                                        {{ user_map.get(settlement.to_user, (settlement.to_user|string)|replace('unregistered_', '')) }}
+                                        <span class="badge bg-info">unregistered</span>
+                                    {% else %}
+                                        {{ user_map.get(settlement.to_user, 'Unknown') }}
+                                    {% endif %}
+                                </td>
                                 <td class="text-end">₹{{ settlement.amount|round(2) }}</td>
                             </tr>
                             {% endfor %}
@@ -77,26 +91,33 @@
                                 <th>Participant</th>
                                 <th>Total Paid</th>
                                 <th>Total Share</th>
-                                <th>Balance</th>
+                                <th>Settlement Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for participant_id, balance in balances.items() %}
                             <tr>
-                                <td>{{ user_map.get(participant_id, 'Unknown') }}</td>
+                                <td>
+                                    {% if (participant_id|string).startswith('unregistered_') %}
+                                        {{ user_map.get(participant_id, (participant_id|string)|replace('unregistered_', '')) }}
+                                        <span class="badge bg-info">unregistered</span>
+                                    {% else %}
+                                        {{ user_map.get(participant_id, 'Unknown') }}
+                                    {% endif %}
+                                </td>
                                 <td class="text-end">
                                     ₹{{ total_paid.get(participant_id, 0)|round(2) }}
                                 </td>
                                 <td class="text-end">
                                     ₹{{ total_share.get(participant_id, 0)|round(2) }}
                                 </td>
-                                <td class="text-end {% if balance > 0 %}text-success{% elif balance < 0 %}text-danger{% endif %}">
+                                <td class="text-end">
                                     {% if balance > 0 %}
-                                    +₹{{ balance|round(2) }}
+                                    <span class="text-success">{{ user_map.get(participant_id, 'Unknown') }} should receive ₹{{ balance|round(2) }}</span>
                                     {% elif balance < 0 %}
-                                    -₹{{ (balance * -1)|round(2) }}
+                                    <span class="text-danger">{{ user_map.get(participant_id, 'Unknown') }} should give ₹{{ (balance * -1)|round(2) }}</span>
                                     {% else %}
-                                    ₹0.00
+                                    <span class="text-muted">Settled up</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -134,7 +155,16 @@
                                 <td>{{ expense.date.strftime('%d %b %Y') }}</td>
                                 <td>{{ expense.description }}</td>
                                 <td class="text-end">₹{{ expense.amount|round(2) }}</td>
-                                <td>{{ user_map.get(expense.payer_id|string, 'Unknown') }}</td>
+                                <td>
+                                    {% if (expense.payer_id|string).startswith('unregistered_') %}
+                                        {{ user_map.get(expense.payer_id, (expense.payer_id|string)|replace('unregistered_', '')) }}
+                                        <span class="badge bg-info">unregistered</span>
+                                    {% elif expense.payer_id == 'group_everyone' %}
+                                        Everyone (Group Payment)
+                                    {% else %}
+                                        {{ user_map.get(expense.payer_id|string, 'Unknown') }}
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if expense.split_method == 'equal' %}
                                     Equal
@@ -147,6 +177,10 @@
                                 <td>
                                     {% for participant_id in expense.get_participants_list() %}
                                     <span class="badge bg-primary me-1">{{ user_map.get(participant_id, 'Unknown') }}</span>
+                                    {% endfor %}
+                                    {% set unregistered_participants = expense.get_unregistered_participants() %}
+                                    {% for name in unregistered_participants %}
+                                    <span class="badge bg-info me-1">{{ name|title }}</span>
                                     {% endfor %}
                                 </td>
                             </tr>

@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_login import current_user, login_required
 from datetime import datetime
-from expense_tracker.backend.models.trip import Trip
-from expense_tracker.backend.models.user import User
-from expense_tracker.backend.models.expense import Expense
-from expense_tracker.backend.database import db
+from backend.models.trip import Trip
+from backend.models.user import User
+from backend.models.expense import Expense
+from backend.models.unregistered_participant import UnregisteredParticipant
+from backend.database import db
 from sqlalchemy import func
 from io import BytesIO
 import json
@@ -104,11 +105,24 @@ def view_trip(trip_id):
         registered_participants = User.query.filter(User.id.in_([int(pid) for pid in participant_ids if pid.isdigit()])).all()
         user_map = {str(user.id): user.name for user in registered_participants}
         
+        # Check for linked unregistered participants and map them to their registered user names
+        # This needs to be done BEFORE adding unregistered participants to avoid overriding
+        linked_unregistered_participants = trip.unregistered_participants_list.filter(UnregisteredParticipant.linked_user_id.isnot(None)).all()
+        for linked_participant in linked_unregistered_participants:
+            unregistered_id = f'unregistered_{linked_participant.name}'
+            linked_user = User.query.get(linked_participant.linked_user_id)
+            if linked_user:
+                # Map the unregistered ID to the registered user's name
+                user_map[unregistered_id] = linked_user.name
+        
         # Add unregistered participants to user_map (use display names)
+        # Only add unregistered participants that are NOT linked to avoid overriding linked mappings
         unregistered_names = trip.get_unregistered_participants_display()
         for name in unregistered_names:
-            # Use a consistent key format for unregistered participants
-            user_map[f'unregistered_{name.lower()}'] = name
+            unregistered_id = f'unregistered_{name.lower()}'
+            # Only add to user_map if not already mapped (i.e., not linked)
+            if unregistered_id not in user_map:
+                user_map[unregistered_id] = name
         
         # Also add any unregistered participants that might be in expenses
         expense_payers = [str(e.payer_id) for e in expenses]
@@ -130,15 +144,20 @@ def view_trip(trip_id):
             })
         
         # Add unregistered participants (use display names)
+        # Only show unregistered participants that are NOT linked
         unregistered_names = trip.get_unregistered_participants_display()
         for name in unregistered_names:
-            participants.append({
-                'id': f'unreg_{name.lower()}',  # Store with lowercase ID for consistency
-                'name': name,  # Display name is already in title case
-                'type': 'unregistered'
-            })
-            # Also add to user_map for settlements display
-            user_map[f'unreg_{name.lower()}'] = name
+            unregistered_id = f'unregistered_{name.lower()}'
+            # Only add to participants list if not linked
+            if unregistered_id not in [f'unregistered_{lp.name}' for lp in linked_unregistered_participants]:
+                participants.append({
+                    'id': unregistered_id,  # Store with the unregistered ID format
+                    'name': name,  # Display name is already in title case
+                    'type': 'unregistered'
+                })
+                # Also add to user_map for settlements display (if not already added)
+                if unregistered_id not in user_map:
+                    user_map[unregistered_id] = name
         
         # Calculate total expenses
         total_expenses = trip.calculate_total_expenses()
@@ -153,13 +172,17 @@ def view_trip(trip_id):
             print(f"Error calculating settlements: {str(e)}")
             settlements = []
         
+        # Get expense contributors
+        expense_contributors = trip.get_expense_contributors()
+        
         return render_template('trips/view.html', 
                             trip=trip, 
                             expenses=expenses, 
                             participants=participants,
                             user_map=user_map,
                             total_expenses=total_expenses,
-                            settlements=settlements)
+                            settlements=settlements,
+                            expense_contributors=expense_contributors)
                             
     except Exception as e:
         print(f"Error viewing trip: {str(e)}")
@@ -225,6 +248,7 @@ def edit_trip(trip_id):
 @trips_bp.route('/<int:trip_id>/manage-participants', methods=['GET', 'POST'])
 @login_required
 def manage_participants(trip_id):
+    print(f"DEBUG: manage_participants called with trip_id: {trip_id}")
     trip = Trip.query.get_or_404(trip_id)
     
     # Check if user is the admin
@@ -233,7 +257,14 @@ def manage_participants(trip_id):
         return redirect(url_for('trips.view_trip', trip_id=trip_id))
     
     if request.method == 'POST':
-        action = request.form.get('action')
+        print(f"DEBUG: POST request received")
+        print(f"DEBUG: Request headers: {dict(request.headers)}")
+        print(f"DEBUG: Content-Type: {request.headers.get('Content-Type')}")
+        print(f"DEBUG: Request form data: {request.form}")
+        print(f"DEBUG: Request JSON data: {request.get_json()}")
+        
+        action = request.form.get('action') if request.form.get('action') else (request.get_json().get('action') if request.get_json() else None)
+        print(f"DEBUG: Action: {action}")
         
         if action == 'add_registered':
             email = request.form.get('email')
@@ -254,7 +285,7 @@ def manage_participants(trip_id):
         elif action == 'add_unregistered':
             name = request.form.get('name')
             
-            # Add unregistered participant by name (convert to lowercase for storage)
+            # Add unregistered participant by name
             if trip.add_unregistered_participant(name):
                 db.session.commit()
                 # Display name in title case
@@ -263,6 +294,43 @@ def manage_participants(trip_id):
             else:
                 display_name = name.strip().title()
                 flash(f'{display_name} is already a participant or the name is invalid', 'info')
+        
+        elif action == 'add_participant':
+            # New unified approach
+            participant_input = request.form.get('participant_input') if request.form.get('participant_input') else (request.get_json().get('participant_input') if request.get_json() else None)
+            
+            # Validate input
+            if not participant_input:
+                return jsonify({'success': False, 'message': 'Please enter a name or email'}) if request.headers.get('Content-Type') == 'application/json' else flash('Please enter a name or email', 'error')
+            
+            # Check if input is an email (contains @)
+            if '@' in participant_input and '.' in participant_input:
+                # Treat as email - try to find existing user
+                user = User.query.filter(func.lower(User.email) == func.lower(participant_input)).first()
+                if user:
+                    # User exists, add as registered participant
+                    if trip.add_participant(user.id):
+                        db.session.commit()
+                        return jsonify({'success': True, 'message': f'Added {user.name} to the trip as a registered user', 'type': 'registered'}) if request.headers.get('Content-Type') == 'application/json' else redirect(url_for('trips.manage_participants', trip_id=trip_id))
+                    else:
+                        return jsonify({'success': False, 'message': f'{user.name} is already a participant'}) if request.headers.get('Content-Type') == 'application/json' else flash(f'{user.name} is already a participant', 'info')
+                else:
+                    # User doesn't exist, treat as unregistered participant with email
+                    name = participant_input.split('@')[0].title()  # Use part before @ as name
+                    if trip.add_unregistered_participant(name):
+                        db.session.commit()
+                        return jsonify({'success': True, 'message': f'Added {name} to the trip as an unregistered participant', 'type': 'unregistered'}) if request.headers.get('Content-Type') == 'application/json' else redirect(url_for('trips.manage_participants', trip_id=trip_id))
+                    else:
+                        return jsonify({'success': False, 'message': f'{name} is already a participant'}) if request.headers.get('Content-Type') == 'application/json' else flash(f'{name} is already a participant', 'info')
+            else:
+                # Treat as name - add as unregistered participant
+                if trip.add_unregistered_participant(participant_input):
+                    db.session.commit()
+                    display_name = participant_input.strip().title()
+                    return jsonify({'success': True, 'message': f'Added {display_name} to the trip as an unregistered participant', 'type': 'unregistered'}) if request.headers.get('Content-Type') == 'application/json' else redirect(url_for('trips.manage_participants', trip_id=trip_id))
+                else:
+                    display_name = participant_input.strip().title()
+                    return jsonify({'success': False, 'message': f'{display_name} is already a participant'}) if request.headers.get('Content-Type') == 'application/json' else flash(f'{display_name} is already a participant', 'info')
         
         elif action == 'remove_registered':
             user_id = request.form.get('user_id')
@@ -285,12 +353,41 @@ def manage_participants(trip_id):
                 flash('Participant not found', 'error')
         
         elif action == 'link_participant':
-            name = request.form.get('name')
-            email = request.form.get('email')
+            print(f"DEBUG: link_participant action triggered in manage_participants route")
+            print(f"DEBUG: Request headers: {dict(request.headers)}")
+            print(f"DEBUG: Request content type: {request.headers.get('Content-Type')}")
+            # Handle both form data and JSON data (AJAX requests)
+            if request.headers.get('Content-Type') == 'application/json':
+                print(f"DEBUG: Processing JSON request")
+                # AJAX request with JSON data
+                json_data = request.get_json()
+                print(f"DEBUG: JSON data received: {json_data}")
+                name = json_data.get('name')
+                email = json_data.get('email')
+            else:
+                print(f"DEBUG: Processing form data")
+                # Regular form submission
+                name = request.form.get('name')
+                email = request.form.get('email')
             
-            # Find user by email
-            user = User.query.filter_by(email=email).first()
+            print(f"DEBUG: Linking participant - name: '{name}', email: '{email}'")
+            print(f"DEBUG: Name type: {type(name)}, Name length: {len(name) if name else 0}")
+            
+            # Validate that we have a name
+            if not name or not name.strip():
+                print(f"DEBUG: Participant name is missing or empty")
+                # Check if this is an AJAX request
+                if request.headers.get('Content-Type') == 'application/json':
+                    return jsonify({'success': False, 'message': 'Participant name is missing. Please try again.'}), 400
+                else:
+                    flash('Participant name is missing. Please try again.', 'error')
+                    return redirect(url_for('trips.manage_participants', trip_id=trip_id))
+            
+            # Find user by email (case-insensitive)
+            print(f"DEBUG: Searching for user with email: {email}")
+            user = User.query.filter(func.lower(User.email) == func.lower(email)).first()
             if not user:
+                print(f"DEBUG: No user found with email: {email}")
                 # Check if this is an AJAX request
                 if request.headers.get('Content-Type') == 'application/json':
                     return jsonify({'success': False, 'message': f'No user found with email: {email}'}), 404
@@ -298,20 +395,134 @@ def manage_participants(trip_id):
                     flash(f'No user found with email: {email}', 'error')
                     return redirect(url_for('trips.manage_participants', trip_id=trip_id))
             
+            print(f"DEBUG: Found user - id: {user.id}, name: {user.name}, email: {user.email}")
+            
+            # Check if the user is a participant of this trip or is the admin
+            participant_ids = trip.get_participants_list()
+            print(f"DEBUG: Trip participants: {participant_ids}")
+            print(f"DEBUG: Trip admin_id: {trip.admin_id}")
+            print(f"DEBUG: Checking if user {user.id} is in participants or is admin")
+            print(f"DEBUG: user.id: {user.id}, str(user.id): {str(user.id)}")
+            print(f"DEBUG: user.id != trip.admin_id: {user.id != trip.admin_id}")
+            print(f"DEBUG: str(user.id) in participant_ids: {str(user.id) in participant_ids}")
+            
+            # Check if user is already a participant in this trip
+            if str(user.id) in participant_ids:
+                print(f"DEBUG: User {user.name} is already a participant in this trip")
+                # Check if this is an AJAX request
+                if request.headers.get('Content-Type') == 'application/json':
+                    return jsonify({'success': False, 'message': f'User {user.name} is already added in this trip'}), 400
+                else:
+                    flash(f'User {user.name} is already added in this trip', 'error')
+                    return redirect(url_for('trips.manage_participants', trip_id=trip_id))
+            
+            # Check if user is the admin (admins are automatically participants)
+            if user.id == trip.admin_id:
+                print(f"DEBUG: User {user.name} is the admin of this trip")
+                # Check if this is an AJAX request
+                if request.headers.get('Content-Type') == 'application/json':
+                    return jsonify({'success': False, 'message': f'User {user.name} is already the admin of this trip'}), 400
+                else:
+                    flash(f'User {user.name} is already the admin of this trip', 'error')
+                    return redirect(url_for('trips.manage_participants', trip_id=trip_id))
+            
             # Link unregistered participant to user
-            if trip.link_participant(name, user.id):
+            # The name passed from the template is in display format (title case)
+            # Convert to lowercase to match database storage format
+            name_lower = name.strip().lower()
+            print(f"DEBUG: All validations passed, calling link_participant with name: '{name_lower}', user_id: {user.id}")
+            result = trip.link_participant(name_lower, user.id)
+            print(f"DEBUG: link_participant result: {result}")
+            
+            if result:
                 db.session.commit()
+                print(f"DEBUG: Database commit completed")
                 # Check if this is an AJAX request
                 if request.headers.get('Content-Type') == 'application/json':
                     return jsonify({'success': True, 'message': f'Linked {name} to user {user.name}'})
                 else:
                     flash(f'Linked {name} to user {user.name}', 'success')
             else:
+                print(f"DEBUG: Failed to link {name} to user {user.name}")
                 # Check if this is an AJAX request
                 if request.headers.get('Content-Type') == 'application/json':
                     return jsonify({'success': False, 'message': f'Failed to link {name} to user {user.name}'}), 400
                 else:
                     flash(f'Failed to link {name} to user {user.name}', 'error')
+        
+        elif action == 'sync_linked_participants':
+            # New action to synchronize all linked participants
+            print(f"DEBUG: sync_linked_participants action triggered")
+            
+            # Get all linked unregistered participants for this trip
+            linked_participants = trip.unregistered_participants_list.filter(UnregisteredParticipant.linked_user_id.isnot(None)).all()
+            
+            sync_count = 0
+            for linked_participant in linked_participants:
+                unregistered_id = f"unregistered_{linked_participant.name}"
+                user_id = str(linked_participant.linked_user_id)
+                
+                print(f"DEBUG: Syncing {unregistered_id} to user {user_id}")
+                
+                # Update all expenses
+                for expense in trip.expenses:
+                    updated = False
+                    
+                    # Update payer_id if it matches the unregistered participant ID
+                    if expense.payer_id == unregistered_id:
+                        expense.payer_id = user_id
+                        print(f"DEBUG: Updated payer_id from {unregistered_id} to {user_id} in expense {expense.id}")
+                        updated = True
+                    
+                    # Update participants list if it contains the unregistered participant ID
+                    participants = expense.get_participants_list()
+                    if unregistered_id in participants:
+                        participants.remove(unregistered_id)
+                        participants.append(user_id)
+                        expense.set_participants_list(participants)
+                        print(f"DEBUG: Updated participants list in expense {expense.id}")
+                        updated = True
+                    
+                    # Update shares to replace the unregistered participant with the registered user
+                    shares = expense.get_shares()
+                    if unregistered_id in shares:
+                        amount = shares.pop(unregistered_id)
+                        shares[user_id] = amount
+                        expense.set_shares(shares)
+                        print(f"DEBUG: Updated shares in expense {expense.id}")
+                        updated = True
+                    
+                    if updated:
+                        db.session.add(expense)
+                        sync_count += 1
+                
+                # Update advances
+                advances = trip.get_advances()
+                if unregistered_id in advances:
+                    amount = advances.pop(unregistered_id)
+                    advances[user_id] = amount
+                    trip.set_advances(advances)
+                    print(f"DEBUG: Updated advances for {unregistered_id} to {user_id}")
+                    sync_count += 1
+                
+                # Update general payments
+                payments = trip.get_general_payments()
+                payment_updated = False
+                for payment in payments:
+                    if payment.get('participant_id') == unregistered_id:
+                        payment['participant_id'] = user_id
+                        payment_updated = True
+                        print(f"DEBUG: Updated general payment for {unregistered_id} to {user_id}")
+                
+                if payment_updated:
+                    trip.set_general_payments(payments)
+                    sync_count += 1
+            
+            # Commit all changes
+            db.session.commit()
+            
+            flash(f'Synchronized {sync_count} linked participant records', 'success')
+            print(f"DEBUG: Synchronization completed. {sync_count} records updated.")
         
         # For AJAX requests, return JSON response
         if request.headers.get('Content-Type') == 'application/json':
@@ -325,13 +536,20 @@ def manage_participants(trip_id):
     participant_ids = trip.get_participants_list()
     participants = User.query.filter(User.id.in_([int(pid) for pid in participant_ids if pid.isdigit()])).all()
     
+    # Get all registered users for linking (including admin if not already in participants)
+    all_registered_users = participants.copy()
+    admin_user = User.query.get(trip.admin_id)
+    if admin_user and admin_user not in all_registered_users:
+        all_registered_users.append(admin_user)
+    
     # Get unregistered participants (use display names)
     unregistered_participants = trip.get_unregistered_participants_display()
     
     return render_template('trips/manage_participants.html', 
                           trip=trip,
                           participants=participants,
-                          unregistered_participants=unregistered_participants)
+                          unregistered_participants=unregistered_participants,
+                          all_registered_users=all_registered_users)
 
 @trips_bp.route('/<int:trip_id>/delete', methods=['POST'])
 @login_required
@@ -809,47 +1027,61 @@ def view_settlements(trip_id):
         # Calculate total paid (from expenses + advances + general payments)
         
         # Sum of expenses paid
-        expense_paid = Expense.query.filter_by(trip_id=trip.id, payer_id=participant_id).with_entities(func.sum(Expense.amount)).scalar() or 0
+        expense_paid = sum(expense.amount for expense in 
+                          Expense.query.filter_by(trip_id=trip.id, payer_id=str(participant_id)))
         
         # Add general payments
         general_payments = trip.get_participant_general_payments(participant_id)
         
         # Add advance payments
         advances = trip.get_advances()
-        advance_amount = advances.get(participant_id, 0)
+        advance_amount = advances.get(str(participant_id), 0)
         
         # Total paid is the sum of all three
         total_paid_amount = expense_paid + general_payments + advance_amount
         total_paid[participant_id] = total_paid_amount
         
-        # Total share is Total paid minus balance
-        # If balance is positive, they paid more than their share
-        # If balance is negative, they paid less than their share
-        total_share[participant_id] = total_paid_amount - balance
+        # Total share is what the participant owes (their share of all expenses)
+        total_share_amount = 0
+        for expense in expenses:
+            shares = expense.get_shares()
+            if str(participant_id) in shares:
+                total_share_amount += shares[str(participant_id)]
+        
+        total_share[participant_id] = total_share_amount
     
     # Also calculate for unregistered participants
-    unregistered_participants = trip.get_unregistered_participants_display()
+    unregistered_participants = trip.get_unregistered_participants()
     for name in unregistered_participants:
-        # Create a unique ID for the unregistered participant (using lowercase for consistency)
-        unregistered_id = f'unregistered_{name.lower()}'
+        # Create a unique ID for the unregistered participant (using the stored lowercase name)
+        unregistered_id = f'unregistered_{name}'
         
         # Calculate balance
         balance = trip.calculate_user_balance(unregistered_id)
         balances[unregistered_id] = balance
         
-        # Add to user_map for display
-        user_map[unregistered_id] = name
+        # Add to user_map for display (using title case for display)
+        display_name = trip.get_unregistered_participant_display_name(name)
+        user_map[unregistered_id] = display_name
         
-        # Calculate total paid and share similar to registered participants
-        # (This might be simplified depending on what's possible for unregistered participants)
-        expense_paid = Expense.query.filter_by(trip_id=trip.id, payer_id=unregistered_id).with_entities(func.sum(Expense.amount)).scalar() or 0
+        # Calculate total paid (similar to registered participants)
+        expense_paid = sum(expense.amount for expense in 
+                          Expense.query.filter_by(trip_id=trip.id, payer_id=unregistered_id))
         general_payments = trip.get_participant_general_payments(unregistered_id)
         advances = trip.get_advances()
         advance_amount = advances.get(unregistered_id, 0)
         
         total_paid_amount = expense_paid + general_payments + advance_amount
         total_paid[unregistered_id] = total_paid_amount
-        total_share[unregistered_id] = total_paid_amount - balance
+        
+        # Calculate total share
+        total_share_amount = 0
+        for expense in expenses:
+            shares = expense.get_shares()
+            if unregistered_id in shares:
+                total_share_amount += shares[unregistered_id]
+        
+        total_share[unregistered_id] = total_share_amount
     
     return render_template('trips/settlements.html', 
                           trip=trip,
@@ -903,16 +1135,135 @@ def export_pdf(trip_id):
         as_attachment=True,
         download_name=f'settlement_report_{trip.name.replace(" ", "_")}.pdf'
     )
+
+@trips_bp.route('/<int:trip_id>/sync-linked-participants', methods=['POST'])
+@login_required
+def sync_linked_participants(trip_id):
+    """AJAX endpoint to synchronize linked participant data by checking expense table"""
     trip = Trip.query.get_or_404(trip_id)
     
-    # Check if user is a participant or admin
-    participants = trip.get_participants_list()
-    if str(current_user.id) not in participants and current_user.id != trip.admin_id:
-        flash('You do not have access to this trip', 'error')
-        return redirect(url_for('trips.list_trips'))
+    # Check if user is the admin
+    if trip.admin_id != current_user.id:
+        return jsonify({'success': False, 'message': 'You do not have permission to perform this action'}), 403
     
-    # Generate PDF report
-    # This will be implemented in a separate function
-    
-    flash('PDF export functionality coming soon', 'info')
-    return redirect(url_for('trips.view_trip', trip_id=trip_id))
+    try:
+        # Get all linked unregistered participants for this trip
+        linked_participants = trip.unregistered_participants_list.filter(UnregisteredParticipant.linked_user_id.isnot(None)).all()
+        
+        print(f"DEBUG: Found {len(linked_participants)} linked participants for trip {trip_id}")
+        
+        if not linked_participants:
+            return jsonify({
+                'success': True, 
+                'message': 'No linked participants found for this trip',
+                'sync_count': 0
+            })
+        
+        sync_count = 0
+        updated_expenses = []
+        
+        # For each linked participant, check the expense table for references
+        for linked_participant in linked_participants:
+            # The database stores names in lowercase, but expense records might use original case
+            # So we need to check for both formats
+            unregistered_ids_to_check = [
+                f"unregistered_{linked_participant.name}",  # lowercase version (database format)
+                f"unregistered_{linked_participant.name.title()}",  # Title case version
+                f"unregistered_{linked_participant.name.upper()}",  # Uppercase version
+                f"unregistered_{linked_participant.name.capitalize()}"  # Capitalized version
+            ]
+            
+            user_id = str(linked_participant.linked_user_id)
+            
+            print(f"DEBUG: Checking for references to {linked_participant.name} (linked to user {user_id}) in expenses")
+            print(f"DEBUG: Will check for these IDs: {unregistered_ids_to_check}")
+            
+            # Check all expenses in this trip for references to this unregistered participant
+            for expense in trip.expenses:
+                expense_updated = False
+                
+                # Check if this expense references the unregistered participant in any format
+                for unregistered_id in unregistered_ids_to_check:
+                    # 1. Check payer_id
+                    if expense.payer_id == unregistered_id:
+                        expense.payer_id = user_id
+                        print(f"DEBUG: Updated payer_id in expense {expense.id} from {unregistered_id} to {user_id}")
+                        expense_updated = True
+                    
+                    # 2. Check participants list
+                    participants = expense.get_participants_list()
+                    if unregistered_id in participants:
+                        participants.remove(unregistered_id)
+                        participants.append(user_id)
+                        expense.set_participants_list(participants)
+                        print(f"DEBUG: Updated participants list in expense {expense.id}")
+                        expense_updated = True
+                    
+                    # 3. Check shares
+                    shares = expense.get_shares()
+                    if unregistered_id in shares:
+                        amount = shares.pop(unregistered_id)
+                        shares[user_id] = amount
+                        expense.set_shares(shares)
+                        print(f"DEBUG: Updated shares in expense {expense.id}")
+                        expense_updated = True
+                
+                # If this expense was updated, add it to the session
+                if expense_updated:
+                    db.session.add(expense)
+                    if expense.id not in updated_expenses:
+                        updated_expenses.append(expense.id)
+                    sync_count += 1
+            
+            # Check advances for this unregistered participant (check all formats)
+            advances = trip.get_advances()
+            advance_updated = False
+            for unregistered_id in unregistered_ids_to_check:
+                if unregistered_id in advances:
+                    amount = advances.pop(unregistered_id)
+                    advances[user_id] = amount
+                    advance_updated = True
+                    print(f"DEBUG: Updated advances for {unregistered_id} to {user_id}")
+            
+            if advance_updated:
+                trip.set_advances(advances)
+                sync_count += 1
+            
+            # Check general payments for this unregistered participant (check all formats)
+            payments = trip.get_general_payments()
+            payment_updated = False
+            for payment in payments:
+                for unregistered_id in unregistered_ids_to_check:
+                    if payment.get('participant_id') == unregistered_id:
+                        payment['participant_id'] = user_id
+                        payment_updated = True
+                        print(f"DEBUG: Updated general payment for {unregistered_id} to {user_id}")
+            
+            if payment_updated:
+                trip.set_general_payments(payments)
+                sync_count += 1
+        
+        # Commit all changes
+        if sync_count > 0:
+            db.session.commit()
+            print(f"DEBUG: Committed {sync_count} updates to database")
+        else:
+            print(f"DEBUG: No updates needed")
+        
+        message = f'Successfully synchronized {sync_count} linked participant records across {len(updated_expenses)} expenses'
+        if sync_count == 0:
+            message += " (No updates were needed as all records were already synchronized)"
+        
+        return jsonify({
+            'success': True, 
+            'message': message,
+            'sync_count': sync_count,
+            'updated_expenses': len(updated_expenses)
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error during synchronization: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Error during synchronization: {str(e)}'}), 500

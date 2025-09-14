@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Name Passing</title>
+</head>
+<body>
+    <h1>Test Name Passing</h1>
+    
+    <script>
+    // Global variable to store the current participant name
+    let currentParticipantName = '';
+
+    // Function to set participant name when modal is triggered
+    function setParticipantName(name) {
+        console.log("=== setParticipantName called ===");
+        console.log("Input name:", name);
+        console.log("Type of name:", typeof name);
+        console.log("Name length:", name ? name.length : 0);
+        console.log("Name repr:", JSON.stringify(name));
+        
+        // Store the participant name in a global variable
+        currentParticipantName = name;
+        console.log("Stored in global variable:", currentParticipantName);
+        console.log("Global variable type:", typeof currentParticipantName);
+        console.log("Global variable length:", currentParticipantName ? currentParticipantName.length : 0);
+        console.log("Global variable repr:", JSON.stringify(currentParticipantName));
+    }
+    
+    // Test with different names
+    console.log("Testing with different names:");
+    setParticipantName("test");
+    setParticipantName("taylor");
+    setParticipantName("");
+    setParticipantName(null);
+    </script>
+</body>
+</html>

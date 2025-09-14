@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
-from expense_tracker.backend.database import db
+from backend.database import db
+from backend.models.unregistered_participant import UnregisteredParticipant
 
 class Trip(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -17,8 +18,7 @@ class Trip(db.Model):
     # JSON field to store registered participant IDs
     participants = db.Column(db.Text, nullable=False, default=json.dumps([]))
     
-    # JSON field to store unregistered participants by name
-    unregistered_participants = db.Column(db.Text, nullable=False, default=json.dumps([]))
+    # Note: unregistered_participants JSON field is being deprecated in favor of UnregisteredParticipant table
     
     # JSON field to store advance payments
     # This is stored as a JSON string but accessed through the get_advances method
@@ -45,10 +45,10 @@ class Trip(db.Model):
         return json.loads(self.participants)
     
     def get_unregistered_participants(self):
-        """Convert JSON string to list of unregistered participant names"""
-        if self.unregistered_participants is None:
-            return []
-        return json.loads(self.unregistered_participants)
+        """Get list of unregistered participant names from the new table"""
+        # Get all unregistered participants for this trip that are not yet linked
+        unregistered_participants = self.unregistered_participants_list.filter_by(linked_user_id=None).all()
+        return [participant.name for participant in unregistered_participants]
     
     def get_unregistered_participants_display(self):
         """Get unregistered participants with names in title case for display"""
@@ -59,31 +59,36 @@ class Trip(db.Model):
         """Convert a stored lowercase name to title case for display"""
         return name.title()
     
-    def set_unregistered_participants(self, participants):
-        """Convert list of unregistered participant names to JSON string"""
-        self.unregistered_participants = json.dumps(participants)
-    
     def set_participants_list(self, participants):
         """Convert list of participant IDs to JSON string"""
         self.participants = json.dumps(participants)
     
     def add_participant(self, user_id):
         """Add a registered participant to the trip"""
+        print(f"DEBUG: add_participant called for trip {self.id} with user_id: {user_id}")
         participants = self.get_participants_list()
+        print(f"DEBUG: Current participants: {participants}")
         if str(user_id) not in participants and user_id != self.admin_id:
             participants.append(str(user_id))
+            print(f"DEBUG: User not in list and not admin, adding. New list: {participants}")
             self.set_participants_list(participants)
+            print(f"DEBUG: add_participant returning True")
             return True
+        print(f"DEBUG: User already in list or is admin. Returning False")
         return False
         
     def add_unregistered_participant(self, name):
-        """Add an unregistered participant by name to the trip"""
-        participants = self.get_unregistered_participants()
-        # Convert name to lowercase for storage but check against original case
-        name_lower = name.strip().lower()
-        if name_lower and name_lower not in [p.lower() for p in participants]:
-            participants.append(name_lower)
-            self.set_unregistered_participants(participants)
+        """Add an unregistered participant by name to the trip using the new table"""
+        # Check if participant already exists
+        existing = self.unregistered_participants_list.filter_by(name=name.strip().lower()).first()
+        if not existing:
+            # Create new unregistered participant
+            unregistered = UnregisteredParticipant(
+                name=name.strip().lower(),
+                trip_id=self.id
+            )
+            db.session.add(unregistered)
+            db.session.commit()
             return True
         return False
     
@@ -98,20 +103,127 @@ class Trip(db.Model):
     
     def remove_unregistered_participant(self, name):
         """Remove an unregistered participant from the trip"""
-        participants = self.get_unregistered_participants()
-        if name in participants:
-            participants.remove(name)
-            self.set_unregistered_participants(participants)
+        print(f"DEBUG: remove_unregistered_participant called for trip {self.id} with name: {name}")
+        # Find the unregistered participant in the database
+        participant = self.unregistered_participants_list.filter_by(name=name.strip().lower()).first()
+        
+        if participant:
+            # Delete the participant from the database
+            db.session.delete(participant)
+            db.session.commit()
+            print(f"DEBUG: Participant removed from database")
+            print(f"DEBUG: remove_unregistered_participant returning True")
             return True
+        print(f"DEBUG: Participant not found in database. Returning False")
         return False
         
     def link_participant(self, name, user_id):
         """Link an unregistered participant to a registered user"""
-        # Remove from unregistered list
-        if self.remove_unregistered_participant(name):
-            # Add to registered list
-            return self.add_participant(user_id)
-        return False
+        print(f"DEBUG: link_participant called with name: '{name}', user_id: {user_id}")
+        
+        # Import db here to avoid circular imports
+        from backend.database import db
+        
+        # Find the unregistered participant in the database
+        participant = self.unregistered_participants_list.filter_by(name=name.strip().lower()).first()
+        
+        if not participant:
+            print(f"DEBUG: Participant '{name}' not found in database")
+            return False
+            
+        print(f"DEBUG: Found participant in database: '{participant.name}'")
+        
+        # Set the linked user ID
+        participant.linked_user_id = user_id
+        db.session.add(participant)
+        
+        # Add to registered list (unless user is already admin)
+        result = True
+        if int(user_id) != self.admin_id:
+            result = self.add_participant(user_id)
+            print(f"DEBUG: add_participant result: {result}")
+        else:
+            print(f"DEBUG: User is admin, skipping add_participant")
+        
+        # Update all expense records to replace the unregistered participant with the registered user
+        # Always proceed with data mapping, regardless of whether add_participant returned True or False
+        # Create the unregistered ID that was used in expenses
+        unregistered_id = f"unregistered_{participant.name}"
+        print(f"DEBUG: unregistered_id: {unregistered_id}")
+        
+        # Update all expenses
+        for expense in self.expenses:
+            print(f"DEBUG: Processing expense {expense.id}")
+            # Update payer_id if it matches the unregistered participant ID
+            if expense.payer_id == unregistered_id:
+                old_payer_id = expense.payer_id
+                expense.payer_id = str(user_id)
+                print(f"DEBUG: Updating payer_id from {old_payer_id} to {user_id}")
+            
+            # Update participants list if it contains the unregistered participant ID
+            participants = expense.get_participants_list()
+            updated_participants = False
+            if unregistered_id in participants:
+                participants.remove(unregistered_id)
+                participants.append(str(user_id))
+                updated_participants = True
+                print(f"DEBUG: Updating participants list, removing {unregistered_id}, adding {user_id}")
+            
+            if updated_participants:
+                expense.set_participants_list(participants)
+            
+            # Update shares to replace the unregistered participant with the registered user
+            shares = expense.get_shares()
+            updated_shares = False
+            if unregistered_id in shares:
+                amount = shares.pop(unregistered_id)
+                shares[str(user_id)] = amount
+                updated_shares = True
+                print(f"DEBUG: Updating shares, moving {amount} from {unregistered_id} to {user_id}")
+            
+            if updated_shares:
+                expense.set_shares(shares)
+        
+        # Update advances to replace the unregistered participant with the registered user
+        advances = self.get_advances()
+        updated_advances = False
+        if unregistered_id in advances:
+            amount = advances.pop(unregistered_id)
+            advances[str(user_id)] = amount
+            updated_advances = True
+            print(f"DEBUG: Updating advances, moving {amount} from {unregistered_id} to {user_id}")
+        
+        if updated_advances:
+            self.set_advances(advances)
+        
+        # Update general payments to replace the unregistered participant with the registered user
+        payments = self.get_general_payments()
+        updated_payments = False
+        for payment in payments:
+            if payment.get('participant_id') == unregistered_id:
+                payment['participant_id'] = str(user_id)
+                updated_payments = True
+                print(f"DEBUG: Updating general payment, changing participant_id from {unregistered_id} to {user_id}")
+        
+        if updated_payments:
+            self.set_general_payments(payments)
+        
+        # Add the unregistered name to the user's linked list
+        from backend.models.user import User
+        user = User.query.get(user_id)
+        if user:
+            user.add_linked_unregistered_name(participant.name)
+            db.session.add(user)
+        
+        # Commit all changes
+        for expense in self.expenses:
+            db.session.add(expense)
+        db.session.commit()
+        
+        # Always return True to indicate successful linking, regardless of whether the user was added as a participant
+        # The route will handle the case where the user is already a participant
+        print(f"DEBUG: link_participant completed successfully")
+        return True
     
     def calculate_total_expenses(self):
         """Calculate total expenses for this trip"""
@@ -119,7 +231,7 @@ class Trip(db.Model):
     
     def calculate_user_balance(self, user_id):
         """Calculate net balance for a specific user"""
-        from expense_tracker.backend.models.expense import Expense
+        from backend.models.expense import Expense
         
         # Check if this is an unregistered participant
         if isinstance(user_id, str) and user_id.startswith('unregistered_'):
@@ -177,7 +289,7 @@ class Trip(db.Model):
         # Positive means they are owed money, negative means they owe money
         balance += total_share
         return balance
-        
+    
     def get_advances(self):
         """Get the advances dictionary from JSON"""
         if not self.advances_json:
@@ -317,6 +429,64 @@ class Trip(db.Model):
         total = sum(payment['amount'] for payment in payments 
                    if payment['participant_id'] == str(participant_id))
         return total
+    
+    def get_expense_contributors(self):
+        """Get list of participants who have contributed to expenses"""
+        # Get all registered participants including admin
+        registered_participants = self.get_participants_list()
+        if str(self.admin_id) not in registered_participants:
+            registered_participants.append(str(self.admin_id))
+        
+        # Get all unregistered participants
+        unregistered_participants = self.get_unregistered_participants()
+        
+        # Track contributors
+        contributors = set()
+        
+        # Check expense payers
+        for expense in self.expenses:
+            # Add payer to contributors
+            payer_id = expense.payer_id
+            if payer_id:
+                contributors.add(payer_id)
+            
+            # Add participants to contributors
+            participants = expense.get_participants_list()
+            for participant in participants:
+                contributors.add(participant)
+            
+            # Check shares for any additional participants
+            shares = expense.get_shares()
+            for participant_id in shares.keys():
+                contributors.add(participant_id)
+        
+        # Check advance payments
+        advances = self.get_advances()
+        for participant_id in advances.keys():
+            contributors.add(participant_id)
+        
+        # Check general payments
+        payments = self.get_general_payments()
+        for payment in payments:
+            participant_id = payment.get('participant_id')
+            if participant_id:
+                contributors.add(participant_id)
+        
+        # Filter to only include actual participants in this trip
+        trip_contributors = []
+        
+        # Add registered contributors
+        for user_id in registered_participants:
+            if user_id in contributors:
+                trip_contributors.append(user_id)
+        
+        # Add unregistered contributors
+        for name in unregistered_participants:
+            unregistered_id = f"unregistered_{name}"
+            if unregistered_id in contributors:
+                trip_contributors.append(unregistered_id)
+        
+        return trip_contributors
     
     def calculate_settlements(self):
         """Calculate how to settle debts between participants"""

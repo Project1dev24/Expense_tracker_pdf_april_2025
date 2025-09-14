@@ -16,34 +16,40 @@
         {% endif %}
     {% endwith %}
     
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Add Registered Participant</h5>
-        </div>
+    <!-- Sync Button -->
+    <div class="card mb-3">
         <div class="card-body">
-            <form method="POST">
-                <input type="hidden" name="action" value="add_registered">
-                <div class="form-group">
-                    <label for="email">User Email:</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
-                </div>
-                <button type="submit" class="btn btn-primary mt-3">Add Registered User</button>
+            <h5 class="card-title">Synchronize Linked Participants</h5>
+            <p class="card-text">
+                <small class="text-muted">
+                    This will scan all expense records and update any references to linked unregistered participants 
+                    to show the registered user's name instead of "unregistered_{name}".
+                </small>
+            </p>
+            <form method="POST" class="d-inline">
+                <input type="hidden" name="action" value="sync_linked_participants">
+                <button type="submit" class="btn btn-warning" id="syncBtn">
+                    <i class="fas fa-sync-alt me-2"></i>Synchronize Linked Participants
+                </button>
             </form>
         </div>
     </div>
     
+    <!-- Unified Add Participant Section -->
     <div class="card mb-4">
         <div class="card-header">
-            <h5>Add Participant by Name</h5>
+            <h5>Add Participant</h5>
         </div>
         <div class="card-body">
-            <form method="POST">
-                <input type="hidden" name="action" value="add_unregistered">
+            <form method="POST" id="addParticipantForm">
+                <input type="hidden" name="action" value="add_participant" id="participantAction">
                 <div class="form-group">
-                    <label for="name">Participant Name:</label>
-                    <input type="text" class="form-control" id="name" name="name" required>
+                    <label for="participantInput">Participant Name or Email:</label>
+                    <input type="text" class="form-control" id="participantInput" name="participant_input" placeholder="Enter name or email" required>
+                    <small class="form-text text-muted">Enter an email to add an existing user, or a name to add a new participant</small>
                 </div>
-                <button type="submit" class="btn btn-primary mt-3">Add by Name</button>
+                <button type="submit" class="btn btn-primary mt-3" id="addParticipantBtn">Add Participant</button>
+                <div id="participantFeedback" class="mt-2"></div>
             </form>
         </div>
     </div>
@@ -107,14 +113,14 @@
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li>
-                                        <button type="button" class="dropdown-item" onclick="showLinkModal('{{ name }}')">
+                                        <button type="button" class="dropdown-item link-participant-btn" data-bs-toggle="modal" data-bs-target="#linkModal" data-name="{{ name }}">
                                             Link to User
                                         </button>
                                     </li>
                                     <li>
                                         <form method="POST">
                                             <input type="hidden" name="action" value="remove_unregistered">
-                                            <input type="hidden" name="name" value="{{ name.lower() }}">
+                                            <input type="hidden" name="name" value="{{ name }}">
                                             <button type="submit" class="dropdown-item text-danger">Remove</button>
                                         </form>
                                     </li>
@@ -149,6 +155,17 @@
                             <label for="email_link">User Email:</label>
                             <input type="email" class="form-control" id="email_link" name="email" required>
                         </div>
+                        <div class="form-group mt-3">
+                            <label>Or select a registered user from this trip:</label>
+                            <div class="list-group" id="registeredUsersList" style="max-height: 200px; overflow-y: auto;">
+                                {% for user in all_registered_users %}
+                                <button type="button" class="list-group-item list-group-item-action" 
+                                        onclick="selectUser('{{ user.email }}')">
+                                    {{ user.name }} ({{ user.email }})
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
                         <div class="mt-3 text-end">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary" id="linkSubmitBtn">Link User</button>
@@ -167,146 +184,394 @@
 
 {% block scripts %}
 <script>
-// Function to show link modal with participant details
-function showLinkModal(name) {
-    // Set the participant name in the modal
-    document.getElementById('participantName').value = name;
-    document.getElementById('linkModalLabel').textContent = 'Link ' + name + ' to User';
+// Global variable to store the current participant name
+let currentParticipantName = '';
+
+// Function to set participant name when modal is triggered
+function setParticipantName(name) {
+    console.log("=== setParticipantName called ===");
+    console.log("Input name:", name);
+    console.log("Type of name:", typeof name);
+    console.log("Name length:", name ? name.length : 0);
+    console.log("Name is null:", name === null);
+    console.log("Name is undefined:", name === undefined);
+    console.log("Name is empty string:", name === "");
+    
+    // Store the participant name in a global variable
+    currentParticipantName = name;
+    console.log("Stored in global variable:", currentParticipantName);
+    
+    // Set the modal title
+    const modalTitle = document.getElementById('linkModalLabel');
+    if (modalTitle) {
+        if (name && name.trim() !== '') {
+            modalTitle.textContent = 'Link ' + name + ' to User';
+        } else {
+            modalTitle.textContent = 'Link Participant to User';
+        }
+        console.log("Modal title set to:", modalTitle.textContent);
+    }
+    
+    // Set the hidden input field value
+    const participantNameInput = document.getElementById('participantName');
+    if (participantNameInput) {
+        participantNameInput.value = name || '';
+        console.log("Set hidden input value to:", participantNameInput.value);
+    } else {
+        console.error("participantName input not found");
+    }
     
     // Clear any previous alerts
     const alert = document.getElementById('linkModalAlert');
-    alert.classList.add('d-none');
+    if (alert) {
+        alert.classList.add('d-none');
+        console.log("Cleared previous alerts");
+    }
     
     // Clear email input
-    document.getElementById('email_link').value = '';
-    
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('linkModal'));
-    modal.show();
+    const emailInput = document.getElementById('email_link');
+    if (emailInput) {
+        emailInput.value = '';
+        console.log("Cleared email input");
+    }
+    console.log("=== setParticipantName completed ===");
 }
 
-// Handle form submission via AJAX
+// Function to select a user from the list
+function selectUser(email) {
+    console.log("=== selectUser called ===");
+    console.log("Selected email:", email);
+    const emailInput = document.getElementById('email_link');
+    if (emailInput) {
+        emailInput.value = email;
+        console.log("Set email input to:", emailInput.value);
+    }
+    console.log("=== selectUser completed ===");
+}
+
+// Handle form submission via direct event attachment
 document.addEventListener('DOMContentLoaded', function() {
-    const linkForm = document.getElementById('linkForm');
-    const linkSubmitBtn = document.getElementById('linkSubmitBtn');
+    console.log("=== DOMContentLoaded fired ===");
     
-    linkForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Get form data
-        const formData = new FormData(linkForm);
-        const action = formData.get('action');
-        const name = formData.get('name');
-        const email = formData.get('email');
-        
-        // Disable submit button and show loading state
-        linkSubmitBtn.disabled = true;
-        linkSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Linking...';
-        
-        // Send AJAX request
-        fetch(window.location.href, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: action,
-                name: name,
-                email: email
-            })
-        })
-        .then(response => {
-            // Check if response is successful
-            if (!response.ok) {
-                // If not successful, parse the JSON error response
-                return response.json().then(errorData => {
-                    throw new Error(JSON.stringify(errorData));
-                });
-            }
-            // If successful, parse the JSON response normally
-            return response.json();
-        })
-        .then(data => {
-            const alert = document.getElementById('linkModalAlert');
+    // Add event listener for link participant buttons
+    const linkButtons = document.querySelectorAll('.link-participant-btn');
+    linkButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const name = this.getAttribute('data-name');
+            setParticipantName(name);
+        });
+    });
+    
+    // Handle unified add participant form
+    const addForm = document.getElementById('addParticipantForm');
+    if (addForm) {
+        addForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            if (data.success) {
-                // Show success message
-                alert.className = 'alert alert-success d-block';
-                alert.textContent = data.message;
-                
-                // Close modal after a short delay
-                setTimeout(function() {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('linkModal'));
-                    modal.hide();
+            const input = document.getElementById('participantInput');
+            const feedback = document.getElementById('participantFeedback');
+            const submitBtn = document.getElementById('addParticipantBtn');
+            
+            const participantInput = input.value.trim();
+            
+            if (!participantInput) {
+                feedback.innerHTML = '<div class="alert alert-danger">Please enter a name or email</div>';
+                return;
+            }
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
+            
+            // Send AJAX request
+            fetch(window.location.href, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: 'add_participant',
+                    participant_input: participantInput
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    feedback.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                    // Clear input
+                    input.value = '';
+                    // Reload page after short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    feedback.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Add Participant';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                feedback.innerHTML = '<div class="alert alert-danger">An error occurred. Please try again.</div>';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Add Participant';
+            });
+        });
+    }
+    
+    // Handle sync button
+    const syncBtn = document.getElementById('syncBtn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (!confirm('Are you sure you want to synchronize all linked participant data? This will scan all expense records and update any references to show registered user names instead of "unregistered_{name}".\n\nThis operation cannot be undone.')) {
+                return;
+            }
+            
+            // Show loading state
+            const originalHtml = syncBtn.innerHTML;
+            syncBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Scanning and Updating...';
+            syncBtn.disabled = true;
+            
+            // Send AJAX request
+            fetch(`${window.location.href.replace('/manage-participants', '')}/sync-linked-participants`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message with details
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+                    alertDiv.innerHTML = `
+                        <strong>Success!</strong> ${data.message}
+                        ${data.updated_expenses ? `<br>Updated ${data.updated_expenses} expense records.` : ''}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    syncBtn.closest('.card').after(alertDiv);
                     
-                    // Reload the page to reflect changes
-                    location.reload();
-                }, 1500);
-            } else {
+                    // Reload page after short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    // Show error message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                    alertDiv.innerHTML = `
+                        <strong>Error:</strong> ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    syncBtn.closest('.card').after(alertDiv);
+                    
+                    // Restore button
+                    syncBtn.innerHTML = originalHtml;
+                    syncBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 // Show error message
-                alert.className = 'alert alert-danger d-block';
-                alert.textContent = data.message;
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                alertDiv.innerHTML = `
+                    <strong>Error:</strong> An error occurred during synchronization. Please try again.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                syncBtn.closest('.card').after(alertDiv);
+                
+                // Restore button
+                syncBtn.innerHTML = originalHtml;
+                syncBtn.disabled = false;
+            });
+        });
+    }
+    
+    const linkForm = document.getElementById('linkForm');
+    console.log("linkForm element:", linkForm);
+    if (linkForm) {
+        linkForm.addEventListener('submit', function(e) {
+            console.log("=== Form submit event triggered ===");
+            e.preventDefault();
+            console.log("Default prevented");
+            
+            // Get form data directly from elements within the link form
+            const actionInput = linkForm.querySelector('input[name="action"]');
+            const action = actionInput ? actionInput.value : null;
+            
+            const emailInput = document.getElementById('email_link');
+            const email = emailInput ? emailInput.value : null;
+            
+            // Get participant name from multiple sources for debugging
+            const participantNameInput = document.getElementById('participantName');
+            const hiddenName = participantNameInput ? participantNameInput.value : null;
+            
+            // Use the global variable for participant name as primary source
+            const name = currentParticipantName;
+            
+            console.log("Form data collected:");
+            console.log("- action:", action);
+            console.log("- email:", email);
+            console.log("- name (global variable):", name);
+            console.log("- name (hidden input):", hiddenName);
+            console.log("- Global currentParticipantName:", currentParticipantName);
+            console.log("- Name type:", typeof name);
+            console.log("- Name value:", JSON.stringify(name));
+            
+            // Validate that we have a name
+            if (!name || name.trim() === '') {
+                console.error("Participant name is missing or empty");
+                console.error("- name:", name);
+                console.error("- typeof name:", typeof name);
+                console.error("- name === null:", name === null);
+                console.error("- name === undefined:", name === undefined);
+                console.error("- name === '':", name === '');
+                console.error("- name.trim() === '':", name && name.trim() === '');
+                
+                const alert = document.getElementById('linkModalAlert');
+                if (alert) {
+                    alert.className = 'alert alert-danger d-block';
+                    alert.textContent = 'Participant name is missing. Please try again.';
+                }
+                console.log("=== Form submission aborted - missing name ===");
+                return;
+            }
+            
+            // Validate email is provided
+            if (!email) {
+                console.error("Email is missing");
+                const alert = document.getElementById('linkModalAlert');
+                if (alert) {
+                    alert.className = 'alert alert-danger d-block';
+                    alert.textContent = 'Please enter an email address or select a user from the list.';
+                }
+                console.log("=== Form submission aborted - missing email ===");
+                return;
+            }
+            
+            console.log("Validation passed, proceeding with AJAX request");
+            
+            // Get submit button
+            const linkSubmitBtn = document.getElementById('linkSubmitBtn');
+            
+            // Disable submit button and show loading state
+            if (linkSubmitBtn) {
+                linkSubmitBtn.disabled = true;
+                linkSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Linking...';
+                console.log("Submit button disabled and set to loading state");
+            }
+            
+            // Send AJAX request
+            console.log("Sending AJAX request...");
+            fetch(window.location.href, {
+                method: 'POST',
+                credentials: 'same-origin',  // Include cookies with the request
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: action,
+                    name: name,
+                    email: email
+                })
+            })
+            .then(response => {
+                console.log("Response received:", response);
+                console.log("Response status:", response.status);
+                console.log("Response OK:", response.ok);
+                // Check if response is successful
+                if (!response.ok) {
+                    // If not successful, parse the JSON error response
+                    return response.json().then(errorData => {
+                        console.log("Error data received:", errorData);
+                        throw new Error(JSON.stringify(errorData));
+                    });
+                }
+                // If successful, parse the JSON response normally
+                return response.json();
+            })
+            .then(data => {
+                console.log("Data received:", data);
+                const alert = document.getElementById('linkModalAlert');
+                
+                if (data.success) {
+                    console.log("Linking successful");
+                    // Show success message
+                    if (alert) {
+                        alert.className = 'alert alert-success d-block';
+                        alert.textContent = data.message;
+                    }
+                    
+                    // Close modal after a short delay
+                    setTimeout(function() {
+                        console.log("Closing modal and reloading page");
+                        // Try both Bootstrap APIs
+                        if (typeof bootstrap !== 'undefined' && document.getElementById('linkModal')) {
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('linkModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                        } else if (typeof $ !== 'undefined' && $('#linkModal').length) {
+                            $('#linkModal').modal('hide');
+                        }
+                        
+                        // Reload the page to reflect changes
+                        location.reload();
+                    }, 1500);
+                } else {
+                    console.log("Linking failed with message:", data.message);
+                    // Show error message
+                    if (alert) {
+                        alert.className = 'alert alert-danger d-block';
+                        alert.textContent = data.message;
+                    }
+                    
+                    // Re-enable submit button
+                    if (linkSubmitBtn) {
+                        linkSubmitBtn.disabled = false;
+                        linkSubmitBtn.innerHTML = 'Link User';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error occurred:', error);
+                // Show error message
+                const alert = document.getElementById('linkModalAlert');
+                if (alert) {
+                    alert.className = 'alert alert-danger d-block';
+                    
+                    try {
+                        // Try to parse the error as JSON
+                        const errorData = JSON.parse(error.message);
+                        alert.textContent = errorData.message || 'An error occurred. Please try again.';
+                    } catch (e) {
+                        // If parsing fails, show a generic error message
+                        alert.textContent = 'An error occurred. Please try again.';
+                    }
+                }
                 
                 // Re-enable submit button
-                linkSubmitBtn.disabled = false;
-                linkSubmitBtn.innerHTML = 'Link User';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            
-            // Show error message
-            const alert = document.getElementById('linkModalAlert');
-            alert.className = 'alert alert-danger d-block';
-            
-            try {
-                // Try to parse the error as JSON
-                const errorData = JSON.parse(error.message);
-                alert.textContent = errorData.message || 'An error occurred. Please try again.';
-            } catch (e) {
-                // If parsing fails, show a generic error message
-                alert.textContent = 'An error occurred. Please try again.';
-            }
-            
-            // Re-enable submit button
-            linkSubmitBtn.disabled = false;
-            linkSubmitBtn.innerHTML = 'Link User';
+                if (linkSubmitBtn) {
+                    linkSubmitBtn.disabled = false;
+                    linkSubmitBtn.innerHTML = 'Link User';
+                }
+            });
+            console.log("=== Form submit event handler completed ===");
         });
-    });
-    
-    // Prevent modal backdrop issues
-    document.getElementById('linkModal').addEventListener('show.bs.modal', function() {
-        // Remove any existing backdrops
-        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
-            backdrop.remove();
-        });
-    });
-    
-    // Ensure proper backdrop when modal is fully shown
-    document.getElementById('linkModal').addEventListener('shown.bs.modal', function() {
-        // Add backdrop if missing
-        if (document.querySelectorAll('.modal-backdrop').length === 0) {
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            document.body.appendChild(backdrop);
-        }
-    });
-    
-    // Clean up backdrop when modal is hidden
-    document.getElementById('linkModal').addEventListener('hidden.bs.modal', function() {
-        // Remove backdrop
-        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
-            backdrop.remove();
-        });
-        
-        // Reset body styles
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-        
-        // Clear any alerts
-        const alert = document.getElementById('linkModalAlert');
-        alert.classList.add('d-none');
-    });
+    } else {
+        console.error("linkForm not found");
+    }
+    console.log("=== DOMContentLoaded handler completed ===");
 });
 </script>
 {% endblock %}

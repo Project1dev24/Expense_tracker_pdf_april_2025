@@ -2,11 +2,12 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import current_user, login_required
 from datetime import datetime
 import json
-from expense_tracker.backend.models.expense import Expense
-from expense_tracker.backend.models.trip import Trip
-from expense_tracker.backend.models.user import User
-from expense_tracker.backend.database import db
-from expense_tracker.backend.config import Config
+from backend.models.expense import Expense
+from backend.models.trip import Trip
+from backend.models.user import User
+from backend.models.unregistered_participant import UnregisteredParticipant
+from backend.database import db
+from backend.config import Config
 
 bp = Blueprint('expenses', __name__, url_prefix='/trip')
 
@@ -19,28 +20,49 @@ def list_expenses(trip_id):
     participants = trip.get_participants_list()
     if str(current_user.id) not in participants and current_user.id != trip.admin_id:
         flash('You do not have access to this trip', 'error')
-        return redirect(url_url_for('trips.list_trips'))
+        return redirect(url_for('trips.list_trips'))
     
     expenses = Expense.query.filter_by(trip_id=trip_id).order_by(Expense.date.desc()).all()
     
     # Get user names for display - improved version
     user_map = {str(user.id): user.name for user in User.query.all()}
     
+    # Check for linked unregistered participants and map them to their registered user names
+    # This needs to be done BEFORE adding unregistered participants to avoid overriding
+    linked_unregistered_participants = trip.unregistered_participants_list.filter(UnregisteredParticipant.linked_user_id.isnot(None)).all()
+    for linked_participant in linked_unregistered_participants:
+        unregistered_id = f'unregistered_{linked_participant.name}'
+        linked_user = User.query.get(linked_participant.linked_user_id)
+        if linked_user:
+            # Map the unregistered ID to the registered user's name
+            user_map[unregistered_id] = linked_user.name
+    
     # Also add unregistered participants to user_map (use display names)
+    # Only add unregistered participants that are NOT linked to avoid overriding linked mappings
     unregistered_names = trip.get_unregistered_participants_display()
     for name in unregistered_names:
-        # Use a consistent key format for unregistered participants (lowercase for storage)
-        user_map[f'unregistered_{name.lower()}'] = name
+        unregistered_id = f'unregistered_{name.lower()}'
+        # Only add to user_map if not already mapped (i.e., not linked)
+        if unregistered_id not in user_map:
+            user_map[unregistered_id] = name
     
     # Also add any unregistered participants that might be in expenses
     expense_payers = [str(e.payer_id) for e in expenses]
     for payer_id in expense_payers:
         if payer_id.startswith('unregistered_'):
             name = payer_id.replace('unregistered_', '')
-            # Display name in title case
-            display_name = trip.get_unregistered_participant_display_name(name)
-            if payer_id not in user_map:
-                user_map[payer_id] = display_name
+            # Check if this unregistered participant is linked to a registered user
+            linked_participant = trip.unregistered_participants_list.filter_by(name=name.strip().lower()).first()
+            if linked_participant and linked_participant.linked_user_id:
+                # Use the registered user's name instead
+                linked_user = User.query.get(linked_participant.linked_user_id)
+                if linked_user and payer_id not in user_map:
+                    user_map[payer_id] = linked_user.name
+            else:
+                # Display name in title case
+                display_name = trip.get_unregistered_participant_display_name(name)
+                if payer_id not in user_map:
+                    user_map[payer_id] = display_name
     
     return render_template('expenses/list.html', 
                           trip=trip, 
@@ -182,9 +204,10 @@ def add_expense(trip_id):
                     return redirect(url_for('expenses.add_expense', trip_id=trip_id))
                 
                 # Include unregistered shares in the shares_data dictionary with special keys
+                # Use lowercase name to match how unregistered participants are stored
                 for name, share_value in unregistered_shares.items():
-                    # Use a special prefix to distinguish unregistered participants in the shares data
-                    shares_data[f"unregistered_{name}"] = share_value
+                    # Use lowercase name to match how unregistered participants are stored in the trip
+                    shares_data[f"unregistered_{name.lower()}"] = share_value
                 
                 expense.update_split('exact', selected_participants, shares_data=shares_data, 
                                    unregistered_participants=selected_unregistered)
@@ -336,16 +359,26 @@ def view_expense(trip_id, expense_id):
         payer_info = {'id': 'group_everyone', 'name': 'Everyone (Group Payment)', 'type': 'group'}
     elif payer_id_str.startswith('unregistered_'):
         name = payer_id_str.replace('unregistered_', '')
-        # Display name in title case
-        display_name = name.title()
-        payer_info = {'id': payer_id_str, 'name': display_name, 'type': 'unregistered'}
+        # Check if this unregistered participant is linked to a registered user
+        linked_participant = trip.unregistered_participants_list.filter_by(name=name.strip().lower()).first()
+        if linked_participant and linked_participant.linked_user_id:
+            # Use the registered user's name instead
+            linked_user = User.query.get(linked_participant.linked_user_id)
+            if linked_user:
+                payer_info = {'id': str(linked_user.id), 'name': linked_user.name, 'type': 'registered'}
+            else:
+                # Fallback to display name if user not found
+                display_name = name.title()
+                payer_info = {'id': payer_id_str, 'name': display_name, 'type': 'unregistered'}
+        else:
+            # Display name in title case
+            display_name = name.title()
+            payer_info = {'id': payer_id_str, 'name': display_name, 'type': 'unregistered'}
     else:
         try:
             payer = User.query.get(int(expense.payer_id))
             if payer:
                 payer_info = {'id': str(payer.id), 'name': payer.name, 'type': 'registered'}
-            elif payer:
-                payer_info = {'id': str(payer.id), 'name': payer.name, 'type': 'unregistered'}
             else:
                 # Unknown user ID
                 payer_info = {'id': payer_id_str, 'name': 'Unknown', 'type': 'unknown'}
@@ -374,11 +407,30 @@ def view_expense(trip_id, expense_id):
     
     # Add unregistered participants
     for name in unregistered_participants:
-        participants.append({
-            'id': f'unregistered_{name}',
-            'name': name,
-            'type': 'unregistered'
-        })
+        # Check if this unregistered participant is linked to a registered user
+        linked_participant = trip.unregistered_participants_list.filter_by(name=name.strip().lower()).first()
+        if linked_participant and linked_participant.linked_user_id:
+            # Use the registered user instead
+            linked_user = User.query.get(linked_participant.linked_user_id)
+            if linked_user:
+                participants.append({
+                    'id': str(linked_user.id),
+                    'name': linked_user.name,
+                    'type': 'registered'
+                })
+            else:
+                # Fallback to unregistered if user not found
+                participants.append({
+                    'id': f'unregistered_{name.lower()}',  # Use lowercase to match storage format
+                    'name': name,
+                    'type': 'unregistered'
+                })
+        else:
+            participants.append({
+                'id': f'unregistered_{name.lower()}',  # Use lowercase to match storage format
+                'name': name,
+                'type': 'unregistered'
+            })
     
     # Get expense shares
     shares = []
@@ -389,12 +441,33 @@ def view_expense(trip_id, expense_id):
             if user_id.startswith('unregistered_'):
                 # Handle unregistered participant
                 name = user_id.replace('unregistered_', '')
-                shares.append({
-                    'user_id': user_id,
-                    'name': name,
-                    'type': 'unregistered',
-                    'amount': amount
-                })
+                # Check if this unregistered participant is linked to a registered user
+                linked_participant = trip.unregistered_participants_list.filter_by(name=name.strip().lower()).first()
+                if linked_participant and linked_participant.linked_user_id:
+                    # Use the registered user's name and ID instead
+                    linked_user = User.query.get(linked_participant.linked_user_id)
+                    if linked_user:
+                        shares.append({
+                            'user_id': str(linked_user.id),
+                            'name': linked_user.name,
+                            'type': 'registered',
+                            'amount': amount
+                        })
+                    else:
+                        # Fallback to unregistered if user not found
+                        shares.append({
+                            'user_id': user_id,
+                            'name': name,
+                            'type': 'unregistered',
+                            'amount': amount
+                        })
+                else:
+                    shares.append({
+                        'user_id': user_id,
+                        'name': name,
+                        'type': 'unregistered',
+                        'amount': amount
+                    })
             else:
                 # Handle registered participant
                 shares.append({
@@ -507,7 +580,8 @@ def edit_expense(trip_id, expense_id):
             for name in selected_unregistered:
                 share_amount = request.form.get(f'share_unregistered_{name}')
                 if share_amount:
-                    shares_data[f'unregistered_{name}'] = float(share_amount)
+                    # Use lowercase name to match how unregistered participants are stored
+                    shares_data[f'unregistered_{name.lower()}'] = float(share_amount)
             
             expense.update_split('exact', selected_participants, shares_data=shares_data, unregistered_participants=selected_unregistered)
         

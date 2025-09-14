@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
-from expense_tracker.backend.models.user import User
-from expense_tracker.backend.database import db
+from backend.models.user import User
+from backend.database import db
 import secrets
 import datetime
 

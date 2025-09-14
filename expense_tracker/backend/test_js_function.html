@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test JS Function</title>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <h1>Test JS Function</h1>
+    
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#linkModal" onclick='setParticipantName("taylor");'>
+        Link Taylor
+    </button>
+    
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#linkModal" onclick='setParticipantName("test user");'>
+        Link Test User
+    </button>
+    
+    <!-- Single Link Modal -->
+    <div class="modal fade" id="linkModal" tabindex="-1" aria-labelledby="linkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="linkModalLabel">Link Participant to User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="linkModalAlert" class="alert d-none" role="alert"></div>
+                    <form method="POST" id="linkForm">
+                        <input type="hidden" name="action" value="link_participant">
+                        <input type="hidden" name="name" id="participantName">
+                        <div class="form-group">
+                            <label for="email_link">User Email:</label>
+                            <input type="email" class="form-control" id="email_link" name="email" required>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label>Or select a registered user from this trip:</label>
+                            <div class="list-group" id="registeredUsersList" style="max-height: 200px; overflow-y: auto;">
+                                <button type="button" class="list-group-item list-group-item-action" 
+                                        onclick="selectUser('test1@mail.com')">
+                                    Test User (test1@mail.com)
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="linkSubmitBtn">Link User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // Global variable to store the current participant name
+    let currentParticipantName = '';
+
+    // Function to set participant name when modal is triggered
+    function setParticipantName(name) {
+        console.log("=== setParticipantName called ===");
+        console.log("Input name:", name);
+        console.log("Type of name:", typeof name);
+        console.log("Name length:", name ? name.length : 0);
+        console.log("Name is null:", name === null);
+        console.log("Name is undefined:", name === undefined);
+        console.log("Name is empty string:", name === "");
+        
+        // Store the participant name in a global variable
+        currentParticipantName = name;
+        console.log("Stored in global variable:", currentParticipantName);
+        
+        // Set the modal title
+        const modalTitle = document.getElementById('linkModalLabel');
+        if (modalTitle) {
+            if (name && name.trim() !== '') {
+                modalTitle.textContent = 'Link ' + name + ' to User';
+            } else {
+                modalTitle.textContent = 'Link Participant to User';
+            }
+            console.log("Modal title set to:", modalTitle.textContent);
+        }
+        
+        // Set the hidden input field value
+        const participantNameInput = document.getElementById('participantName');
+        if (participantNameInput) {
+            participantNameInput.value = name || '';
+            console.log("Set hidden input value to:", participantNameInput.value);
+        } else {
+            console.error("participantName input not found");
+        }
+        
+        // Clear any previous alerts
+        const alert = document.getElementById('linkModalAlert');
+        if (alert) {
+            alert.classList.add('d-none');
+            console.log("Cleared previous alerts");
+        }
+        
+        // Clear email input
+        const emailInput = document.getElementById('email_link');
+        if (emailInput) {
+            emailInput.value = '';
+            console.log("Cleared email input");
+        }
+        console.log("=== setParticipantName completed ===");
+    }
+
+    // Function to select a user from the list
+    function selectUser(email) {
+        console.log("=== selectUser called ===");
+        console.log("Selected email:", email);
+        const emailInput = document.getElementById('email_link');
+        if (emailInput) {
+            emailInput.value = email;
+            console.log("Set email input to:", emailInput.value);
+        }
+        console.log("=== selectUser completed ===");
+    }
+    </script>
+</body>
+</html>
