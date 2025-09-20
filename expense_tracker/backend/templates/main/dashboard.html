@@ -52,10 +52,10 @@ endblock %} {% block content %}
     <!-- White -->
 </div>
 
-<div class="row">
-    <!-- Sidebar Column (appears on top on mobile) -->
-    <div class="col-lg-4 order-lg-2">
-        <div class="stat-card mb-4">
+<!-- Summary Stats Cards -->
+<div class="row mb-5">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="stat-card h-100">
             <div class="stat-card-info">
                 <h6 class="mb-1">Balance</h6>
                 {% if total_balance > 0 %}
@@ -74,7 +74,9 @@ endblock %} {% block content %}
                 {% endif %}
             </div>
         </div>
-        <div class="stat-card mb-4">
+    </div>
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="stat-card h-100">
             <div class="stat-card-info">
                 <h6 class="mb-1">Total Spent</h6>
                 <h3 class="display-6 fw-bold mb-0">
@@ -83,7 +85,9 @@ endblock %} {% block content %}
                 <p class="small mb-0">Across all trips</p>
             </div>
         </div>
-        <div class="stat-card mb-4">
+    </div>
+    <div class="col-lg-4 col-md-12 mb-4">
+        <div class="stat-card h-100">
             <div class="stat-card-info">
                 <h6 class="mb-1">Total Trips</h6>
                 <h3 class="display-6 fw-bold mb-0">
@@ -94,16 +98,18 @@ endblock %} {% block content %}
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Main Content Column (appears below on mobile) -->
-    <div class="col-lg-8 order-lg-1">
+<!-- Main Content -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
         <!-- Trips Section -->
-        <div class="panel mb-4">
+        <div class="panel">
             <div class="panel-header">
                 <h5 class="fw-bold mb-0">Recent Trips</h5>
             </div>
             <div
-                class="panel-body d-flex align-items-center justify-content-center"
+                class="panel-body d-flex align-items-center justify-content-center align-items-lg-stretch"
             >
                 {% if recent_trips %} {% if recent_trips|length > 1 %}
                 <div class="embla" id="tripsCarousel">
@@ -173,7 +179,8 @@ endblock %} {% block content %}
                 {% endif %}
             </div>
         </div>
-
+    </div>
+    <div class="col-lg-6 mb-4">
         <!-- Expenses Section -->
         <div class="panel d-flex flex-column">
             <div class="panel-header">
@@ -212,6 +219,54 @@ endblock %} {% block content %}
                     <p>No recent activity.</p>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="fw-bold mb-0">Spending by Category</h5>
+            </div>
+            <div class="chart-filters">
+                <select id="category-trip-filter" class="form-select">
+                    <option value="all">All Trips</option>
+                    {% for trip in trips %}
+                    <option value="{{ trip.id }}">{{ trip.name }}</option>
+                    {% endfor %}
+                </select>
+                <select id="category-month-filter" class="form-select">
+                    <option value="all">All Time</option>
+                    {% for month in months_for_filter %}
+                    <option value="{{ month.value }}">
+                        {{ month.text }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="panel-body">
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="fw-bold mb-0">Spending History</h5>
+            </div>
+            <div class="chart-filters">
+                <select id="spending-trip-filter" class="form-select">
+                    <option value="all">All Trips</option>
+                    {% for trip in trips %}
+                    <option value="{{ trip.id }}">{{ trip.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="panel-body">
+                <canvas id="spendingLineChart"></canvas>
             </div>
         </div>
     </div>
@@ -339,18 +394,20 @@ endblock %} {% block content %}
     /* Embla Carousel Styles */
     .embla {
         width: 100%;
+        height: 100%;
         overflow: hidden;
     }
     .embla__viewport {
         overflow: hidden;
+        height: 100%;
     }
     .embla__container {
         display: flex;
+        height: 100%;
     }
     .embla__slide {
         flex: 0 0 var(--slide-size);
         min-width: 0;
-        padding-right: var(--slide-spacing);
     }
 
     /* Recent Activity List */
@@ -385,86 +442,181 @@ endblock %} {% block content %}
         transform: scale(1.2);
         box-shadow: 0 0 0 2px var(--border-color);
     }
+
+    /* Chart Filters */
+    .chart-filters {
+        display: flex;
+        gap: 1rem;
+        padding: 0.75rem 1.25rem;
+        border-bottom: var(--border-width) solid var(--border-color);
+    }
+    .form-select {
+        border: var(--border-width) solid var(--border-color);
+        border-radius: 0.5rem;
+    }
 </style>
 {% endblock %} {% block scripts %}
 <script src="https://unpkg.com/embla-carousel@latest/embla-carousel.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Carousel
-        const emblaNode = document.querySelector(
-            "#tripsCarousel .embla__viewport",
-        );
-        if (emblaNode) {
-            const emblaApi = EmblaCarousel(emblaNode, {
-                loop: true,
-                align: "start",
-            });
-        }
-
-        // Theme Selector
-        const themeSelector = document.querySelector(".theme-selector");
-        const themeDots = themeSelector.querySelectorAll(".theme-dot");
-        const root = document.documentElement;
-
-        const getContrastColor = (hex) => {
-            if (hex.indexOf("#") === 0) {
-                hex = hex.slice(1);
-            }
-            const r = parseInt(hex.slice(0, 2), 16);
-            const g = parseInt(hex.slice(2, 4), 16);
-            const b = parseInt(hex.slice(4, 6), 16);
-            // Using YIQ formula to determine brightness
-            const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-            return yiq >= 128 ? "#000000" : "#FFFFFF";
-        };
-
-        const darkenColor = (hex, percent) => {
-            if (hex.indexOf("#") === 0) {
-                hex = hex.slice(1);
-            }
-            let r = parseInt(hex.slice(0, 2), 16);
-            let g = parseInt(hex.slice(2, 4), 16);
-            let b = parseInt(hex.slice(4, 6), 16);
-
-            r = Math.floor(r * (1 - percent / 100));
-            g = Math.floor(g * (1 - percent / 100));
-            b = Math.floor(b * (1 - percent / 100));
-
-            const toHex = (c) => ("0" + c.toString(16)).slice(-2);
-
-            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-        };
-
-        const applyTheme = (color) => {
-            const contrastColor = getContrastColor(color);
-            const secondaryColor = darkenColor(color, 15);
-
-            root.style.setProperty("--theme-accent-color", color);
-            root.style.setProperty("--theme-contrast-color", contrastColor);
-            root.style.setProperty("--secondary-action-color", secondaryColor);
-
-            localStorage.setItem("dashboardThemeColor", color);
-            // Update active dot
-            themeDots.forEach((dot) => {
-                dot.classList.toggle("active", dot.dataset.color === color);
-            });
-        };
-
-        themeDots.forEach((dot) => {
-            dot.addEventListener("click", (e) => {
-                applyTheme(e.target.dataset.color);
-            });
+    document.addEventListener('DOMContentLoaded', function() {
+      // Carousel
+      const emblaNode = document.querySelector('#tripsCarousel .embla__viewport');
+      if (emblaNode) {
+        const emblaApi = EmblaCarousel(emblaNode, {
+          loop: true,
+          align: 'start'
         });
+      }
 
-        // Load saved theme on page load
-        const savedColor = localStorage.getItem("dashboardThemeColor");
-        if (savedColor) {
-            applyTheme(savedColor);
-        } else {
-            // Set default active dot
-            applyTheme(themeDots[0].dataset.color);
-        }
+      // Theme Selector
+      const themeSelector = document.querySelector('.theme-selector');
+      const themeDots = themeSelector.querySelectorAll('.theme-dot');
+      const root = document.documentElement;
+
+      const getContrastColor = (hex) => {
+          if (hex.indexOf('#') === 0) {
+              hex = hex.slice(1);
+          }
+          const r = parseInt(hex.slice(0, 2), 16);
+          const g = parseInt(hex.slice(2, 4), 16);
+          const b = parseInt(hex.slice(4, 6), 16);
+          const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+          return (yiq >= 128) ? '#000000' : '#FFFFFF';
+      };
+
+      const darkenColor = (hex, percent) => {
+          if (hex.indexOf('#') === 0) {
+              hex = hex.slice(1);
+          }
+          let r = parseInt(hex.slice(0, 2), 16);
+          let g = parseInt(hex.slice(2, 4), 16);
+          let b = parseInt(hex.slice(4, 6), 16);
+
+          r = Math.floor(r * (1 - percent / 100));
+          g = Math.floor(g * (1 - percent / 100));
+          b = Math.floor(b * (1 - percent / 100));
+
+          const toHex = c => ('0' + c.toString(16)).slice(-2);
+
+          return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+      };
+
+      const applyTheme = (color) => {
+          const contrastColor = getContrastColor(color);
+          const secondaryColor = darkenColor(color, 15);
+
+          root.style.setProperty('--theme-accent-color', color);
+          root.style.setProperty('--theme-contrast-color', contrastColor);
+          root.style.setProperty('--secondary-action-color', secondaryColor);
+
+          localStorage.setItem('dashboardThemeColor', color);
+          themeDots.forEach(dot => {
+              dot.classList.toggle('active', dot.dataset.color === color);
+          });
+      };
+
+      themeDots.forEach(dot => {
+          dot.addEventListener('click', (e) => {
+              applyTheme(e.target.dataset.color);
+          });
+      });
+
+      const savedColor = localStorage.getItem('dashboardThemeColor');
+      if (savedColor) {
+          applyTheme(savedColor);
+      } else {
+          applyTheme(themeDots[0].dataset.color);
+      }
+
+      // --- Charts ---
+      let categoryPieChart, spendingLineChart;
+      const chartColors = ['#AEC6CF', '#B2D8B2', '#C3B1E1', '#FFDAB9', '#F4C2C2', '#E6E6FA', '#DDBBFF'];
+
+      const categoryCtx = document.getElementById('categoryPieChart');
+      const lineCtx = document.getElementById('spendingLineChart');
+
+      const initCharts = (data) => {
+          if (categoryPieChart) categoryPieChart.destroy();
+          if (spendingLineChart) spendingLineChart.destroy();
+
+          if (categoryCtx && data.category_values.length > 0) {
+              categoryPieChart = new Chart(categoryCtx, {
+                  type: 'doughnut',
+                  data: {
+                      labels: data.category_labels,
+                      datasets: [{
+                          data: data.category_values,
+                          backgroundColor: chartColors,
+                          borderColor: '#000',
+                          borderWidth: 2,
+                      }]
+                  },
+                  options: { responsive: true, plugins: { legend: { position: 'top' } } }
+              });
+          } else if (categoryCtx) {
+              categoryCtx.parentElement.innerHTML = '<div class="text-center p-5">No category data to display for this period.</div>';
+          }
+
+          if (lineCtx && data.line_chart_values.length > 0) {
+              spendingLineChart = new Chart(lineCtx, {
+                  type: 'line',
+                  data: {
+                      labels: data.line_chart_labels,
+                      datasets: [{
+                          label: 'Spending',
+                          data: data.line_chart_values,
+                          fill: true,
+                          backgroundColor: 'rgba(174, 198, 207, 0.2)',
+                          borderColor: '#AEC6CF',
+                          tension: 0.1,
+                          borderWidth: 2
+                      }]
+                  },
+                  options: { responsive: true, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+              });
+          } else if (lineCtx) {
+              lineCtx.parentElement.innerHTML = '<div class="text-center p-5">No spending data to display for this period.</div>';
+          }
+      };
+
+      const updateCharts = async () => {
+          const categoryTripId = document.getElementById('category-trip-filter').value;
+          const categoryMonth = document.getElementById('category-month-filter').value;
+          const spendingTripId = document.getElementById('spending-trip-filter').value;
+
+          // For simplicity, we'll use the category filters for both charts for now.
+          // A more advanced implementation could have separate filters.
+          const tripId = categoryTripId;
+          const month = categoryMonth;
+
+          let url = `/api/dashboard_data?`;
+          if (tripId !== 'all') url += `trip_id=${tripId}&`;
+          if (month !== 'all') url += `month=${month}&`;
+
+          try {
+              const response = await fetch(url);
+              const data = await response.json();
+              initCharts(data);
+          } catch (error) {
+              console.error('Error fetching chart data:', error);
+          }
+      };
+
+      // Add event listeners
+      document.getElementById('category-trip-filter').addEventListener('change', updateCharts);
+      document.getElementById('category-month-filter').addEventListener('change', updateCharts);
+      document.getElementById('spending-trip-filter').addEventListener('change', updateCharts);
+
+      // Initial chart load
+      initCharts({
+          category_labels: {{ category_labels|tojson }},
+          category_values: {{ category_values|tojson }},
+          line_chart_labels: {{ line_chart_labels|tojson }},
+          line_chart_values: {{ line_chart_values|tojson }}
+      });
+
     });
 </script>
 {% endblock %}
