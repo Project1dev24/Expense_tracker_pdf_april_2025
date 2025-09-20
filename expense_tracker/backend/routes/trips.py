@@ -18,6 +18,8 @@ trips_bp = Blueprint('trips', __name__)
 def list_trips():
     # Get all trips where user is a participant or admin
     trips = current_user.get_trips()
+    # Sort trips by start date (most recent first)
+    trips = sorted(trips, key=lambda t: t.start_date, reverse=True)
     return render_template('trips/list.html', trips=trips)
 
 @trips_bp.route('/add', methods=['GET', 'POST'])
@@ -863,7 +865,7 @@ def manage_payments(trip_id):
                 'amount': payment_amount,
                 'description': description,
                 'date': payment['date'],
-                'expense_id': payment['expense_id']
+                'expense_id': payment.get('expense_id')  # Use .get() to handle missing key
             })
         elif participant_id in registered_map:
             user = registered_map[participant_id]
@@ -874,7 +876,7 @@ def manage_payments(trip_id):
                 'amount': payment_amount,
                 'description': description,
                 'date': payment['date'],
-                'expense_id': payment['expense_id']
+                'expense_id': payment.get('expense_id')  # Use .get() to handle missing key
             })
     
     # Convert payment summary to sorted list for display

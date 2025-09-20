@@ -3,53 +3,851 @@
 {% block title %}Trip Expense Tracker - Welcome{% endblock %}
 
 {% block content %}
-<div class="row align-items-center">
-    <div class="col-md-6">
-        <h1 class="display-4 mb-4">Track Trip Expenses with Ease</h1>
-        <p class="lead">
-            Manage your trip expenses, split costs with friends, and settle up without the hassle.
+<!-- Hero Section -->
+<div class="container py-7">
+  <div class="row align-items-center">
+    <div class="col-lg-6 mb-5 mb-lg-0">
+      <div class="pe-lg-5">
+        <h1 class="display-4 fw-bold mb-4">
+          Split. Track. <span class="text-primary">Settle</span>
+        </h1>
+        <p class="lead fs-5 mb-4 text-muted">
+          The smart way to manage group expenses. No more messy calculations or forgotten payments.
         </p>
-        <div class="mt-4">
-            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg me-2">
-                <i class="fas fa-user-plus me-2"></i>Sign Up
-            </a>
-            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">
-                <i class="fas fa-sign-in-alt me-2"></i>Login
-            </a>
+        <p class="mb-5">
+          Whether it's a weekend getaway or an international adventure, our intelligent expense tracker ensures everyone pays their fair share with zero hassle.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 py-3 rounded-pill">
+            <i class="fas fa-user-plus me-2"></i>Start Tracking Free
+          </a>
+          <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg px-4 py-3 rounded-pill">
+            <i class="fas fa-sign-in-alt me-2"></i>Login
+          </a>
         </div>
+      </div>
     </div>
-    <div class="col-md-6 text-center">
-        <img src="{{ url_for('static', filename='img/trip-illustration.svg') }}" alt="Trip Expense Tracker" class="img-fluid" style="max-height: 400px;">
+    <div class="col-lg-6">
+      <!-- Embla Carousel for Highlights -->
+      <div class="embla-highlights">
+        <div class="embla-highlights__viewport" id="highlightsCarousel">
+          <div class="embla-highlights__container">
+            <!-- Slide 1: Group Trip Overview -->
+            <div class="embla-highlights__slide">
+              <div class="border rounded-4 p-4 shadow-sm bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <div class="d-flex align-items-center">
+                    <div class="avatar bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3">
+                      <i class="fas fa-wallet"></i>
+                    </div>
+                    <div>
+                      <h5 class="mb-0">Group Trip</h5>
+                      <p class="text-muted mb-0 small">Beach Vacation</p>
+                    </div>
+                  </div>
+                  <span class="badge bg-success">Active</span>
+                </div>
+                
+                <div class="expense-summary mb-4">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Total Expenses</span>
+                    <span class="fw-bold">₹12,450</span>
+                  </div>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 65%"></div>
+                  </div>
+                </div>
+                
+                <div class="participants-grid">
+                  <div class="participant-card border rounded-3 p-3 mb-3">
+                    <div class="d-flex align-items-center">
+                      <div class="avatar bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3">
+                        <i class="fas fa-user"></i>
+                      </div>
+                      <div class="flex-grow-1">
+                        <h6 class="mb-0">You</h6>
+                        <p class="text-success mb-0 small">₹4,200</p>
+                      </div>
+                      <span class="badge bg-success">Paid</span>
+                    </div>
+                  </div>
+                  
+                  <div class="participant-card border rounded-3 p-3 mb-3">
+                    <div class="d-flex align-items-center">
+                      <div class="avatar bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3">
+                        <i class="fas fa-user"></i>
+                      </div>
+                      <div class="flex-grow-1">
+                        <h6 class="mb-0">Alex</h6>
+                        <p class="text-warning mb-0 small">₹3,800</p>
+                      </div>
+                      <span class="badge bg-warning">Pending</span>
+                    </div>
+                  </div>
+                  
+                  <div class="participant-card border rounded-3 p-3">
+                    <div class="d-flex align-items-center">
+                      <div class="avatar bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center me-3">
+                        <i class="fas fa-user"></i>
+                      </div>
+                      <div class="flex-grow-1">
+                        <h6 class="mb-0">Sam</h6>
+                        <p class="text-info mb-0 small">₹4,450</p>
+                      </div>
+                      <span class="badge bg-info">Owes</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Slide 2: Expense Tracking Benefits -->
+            <div class="embla-highlights__slide">
+              <div class="border rounded-4 p-4 shadow-sm bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <div class="d-flex align-items-center">
+                    <div class="avatar bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3">
+                      <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                      <h5 class="mb-0">Expense Tracking</h5>
+                      <p class="text-muted mb-0 small">Real-time Insights</p>
+                    </div>
+                  </div>
+                  <span class="badge bg-info">Live</span>
+                </div>
+                
+                <div class="expense-summary mb-4">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Monthly Average</span>
+                    <span class="fw-bold">₹8,750</span>
+                  </div>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 75%"></div>
+                  </div>
+                </div>
+                
+                <div class="benefits-grid">
+                  <div class="benefit-item mb-3">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-check-circle text-success me-2"></i>
+                      <span>50+ Trips Managed</span>
+                    </div>
+                  </div>
+                  <div class="benefit-item mb-3">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-check-circle text-success me-2"></i>
+                      <span>Zero Calculation Errors</span>
+                    </div>
+                  </div>
+                  <div class="benefit-item">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-check-circle text-success me-2"></i>
+                      <span>100% Payment Tracking</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Slide 3: Smart Settlements -->
+            <div class="embla-highlights__slide">
+              <div class="border rounded-4 p-4 shadow-sm bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <div class="d-flex align-items-center">
+                    <div class="avatar bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3">
+                      <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div>
+                      <h5 class="mb-0">Smart Settlements</h5>
+                      <p class="text-muted mb-0 small">Optimized Payments</p>
+                    </div>
+                  </div>
+                  <span class="badge bg-warning">Efficient</span>
+                </div>
+                
+                <div class="settlement-summary mb-4">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Settlements This Month</span>
+                    <span class="fw-bold">12</span>
+                  </div>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 90%"></div>
+                  </div>
+                </div>
+                
+                <div class="settlement-benefits">
+                  <div class="benefit-item mb-3">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-coins text-warning me-2"></i>
+                      <span>₹24,500 Transacted</span>
+                    </div>
+                  </div>
+                  <div class="benefit-item mb-3">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-clock text-warning me-2"></i>
+                      <span>75% Time Saved</span>
+                    </div>
+                  </div>
+                  <div class="benefit-item">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-smile text-warning me-2"></i>
+                      <span>100% User Satisfaction</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Slide 4: Security Features -->
+            <div class="embla-highlights__slide">
+              <div class="border rounded-4 p-4 shadow-sm bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <div class="d-flex align-items-center">
+                    <div class="avatar bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center me-3">
+                      <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div>
+                      <h5 class="mb-0">Bank-level Security</h5>
+                      <p class="text-muted mb-0 small">Your Data Protected</p>
+                    </div>
+                  </div>
+                  <span class="badge bg-info">Secure</span>
+                </div>
+                
+                <div class="security-summary mb-4">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Data Encrypted</span>
+                    <span class="fw-bold">256-bit SSL</span>
+                  </div>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: 100%"></div>
+                  </div>
+                </div>
+                
+                <div class="security-benefits">
+                  <div class="benefit-item mb-3">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-lock text-info me-2"></i>
+                      <span>End-to-End Encryption</span>
+                    </div>
+                  </div>
+                  <div class="benefit-item mb-3">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-user-shield text-info me-2"></i>
+                      <span>Two-Factor Authentication</span>
+                    </div>
+                  </div>
+                  <div class="benefit-item">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-database text-info me-2"></i>
+                      <span>Regular Backups</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
-<div class="row mt-5">
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-receipt fa-3x text-primary mb-3"></i>
-                <h3 class="card-title">Record Expenses</h3>
-                <p class="card-text">Easily record expenses during your trips with multiple splitting options.</p>
-            </div>
-        </div>
+<!-- Value Propositions -->
+<div class="container py-7">
+  <div class="row">
+    <div class="col-12 text-center mb-6">
+      <h2 class="display-4 fw-bold mb-4">Expense Tracking <span class="text-primary">Simplified</span></h2>
+      <p class="lead mx-auto text-muted" style="max-width: 700px;">
+        Our approach to group expense management makes splitting costs effortless and transparent.
+      </p>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-users fa-3x text-primary mb-3"></i>
-                <h3 class="card-title">Group Management</h3>
-                <p class="card-text">Add friends to your trips and manage expenses together.</p>
-            </div>
+  </div>
+  
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="border rounded-4 p-4 h-100 bg-white">
+        <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
+          <i class="fas fa-calculator fa-lg"></i>
         </div>
+        <h4 class="mb-3">Smart Splits</h4>
+        <p class="text-muted">
+          Equal, exact, or itemized - our splitting algorithms handle any scenario.
+        </p>
+      </div>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-file-invoice fa-3x text-primary mb-3"></i>
-                <h3 class="card-title">Settlement Reports</h3>
-                <p class="card-text">Generate settlement reports and export them as PDFs.</p>
-            </div>
+    
+    <div class="col-md-6 col-lg-3">
+      <div class="border rounded-4 p-4 h-100 bg-white">
+        <div class="feature-icon bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
+          <i class="fas fa-sync-alt fa-lg"></i>
         </div>
+        <h4 class="mb-3">Real-time Sync</h4>
+        <p class="text-muted">
+          All changes update instantly across devices, keeping everyone in the loop.
+        </p>
+      </div>
     </div>
+    
+    <div class="col-md-6 col-lg-3">
+      <div class="border rounded-4 p-4 h-100 bg-white">
+        <div class="feature-icon bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
+          <i class="fas fa-file-invoice fa-lg"></i>
+        </div>
+        <h4 class="mb-3">Instant Reports</h4>
+        <p class="text-muted">
+          Generate settlement reports with one click and export as PDF.
+        </p>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+      <div class="border rounded-4 p-4 h-100 bg-white">
+        <div class="feature-icon bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
+          <i class="fas fa-shield-alt fa-lg"></i>
+        </div>
+        <h4 class="mb-3">Secure & Private</h4>
+        <p class="text-muted">
+          Your financial data is kept safe and private.
+        </p>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Demo Section with Carousel -->
+<div class="container-fluid bg-light py-7">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 mb-5 mb-lg-0">
+        <h2 class="display-4 fw-bold mb-4">See It In <span class="text-primary">Action</span></h2>
+        <p class="lead mb-4">
+          Experience how our expense tracker simplifies group finances with an intuitive interface.
+        </p>
+        <ul class="list-unstyled">
+          <li class="mb-3">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong>Intuitive Dashboard</strong> - Visualize expenses at a glance
+          </li>
+          <li class="mb-3">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong>Smart Notifications</strong> - Never forget who owes what
+          </li>
+          <li class="mb-3">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong>Multi-currency Support</strong> - Track expenses in any currency
+          </li>
+          <li>
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong>Expense Categories</strong> - Organize spending by type
+          </li>
+        </ul>
+      </div>
+      <div class="col-lg-6">
+        <!-- Embla Carousel for Demo -->
+        <div class="embla-demo">
+          <div class="embla-demo__viewport" id="demoCarousel">
+            <div class="embla-demo__container">
+              <!-- Slide 1: Sample Expense -->
+              <div class="embla-demo__slide">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden hover-lift bg-white h-100">
+                  <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                      <i class="fas fa-receipt me-2"></i>Sample Expense
+                    </h5>
+                  </div>
+                  <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                      <span class="badge bg-primary">Dinner</span>
+                      <span class="text-muted">Today</span>
+                    </div>
+                    
+                    <div class="expense-detail mb-4 flex-grow-1">
+                      <div class="d-flex justify-content-between mb-2">
+                        <span>Restaurant Bill</span>
+                        <span class="fw-bold">₹2,450</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span>Paid by</span>
+                        <span>You</span>
+                      </div>
+                      <div class="d-flex justify-content-between">
+                        <span>Split between</span>
+                        <span>4 people</span>
+                      </div>
+                    </div>
+                    
+                    <div class="split-details">
+                      <h6 class="mb-3">How it's split:</h6>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span>You</span>
+                        <span>₹612.50</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span>Alex</span>
+                        <span>₹612.50</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span>Sam</span>
+                        <span>₹612.50</span>
+                      </div>
+                      <div class="d-flex justify-content-between">
+                        <span>Jordan</span>
+                        <span>₹612.50</span>
+                      </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-top mt-auto">
+                      <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Your balance:</span>
+                        <span class="text-success fw-bold">₹1,837.50</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Slide 2: Group Trip Management -->
+              <div class="embla-demo__slide">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden hover-lift bg-white h-100">
+                  <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                      <i class="fas fa-users me-2"></i>Group Trip Management
+                    </h5>
+                  </div>
+                  <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                      <span class="badge bg-success">Active</span>
+                      <span class="text-muted">Beach Vacation</span>
+                    </div>
+                    
+                    <div class="expense-summary mb-4 flex-grow-1">
+                      <div class="d-flex justify-content-between mb-2">
+                        <span>Total Trip Expenses</span>
+                        <span class="fw-bold">₹15,680</span>
+                      </div>
+                      <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 78%"></div>
+                      </div>
+                    </div>
+                    
+                    <div class="participants-grid">
+                      <h6 class="mb-3">Trip Participants</h6>
+                      <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-primary">You (Admin)</span>
+                        <span class="badge bg-info">Alex</span>
+                        <span class="badge bg-info">Sam</span>
+                        <span class="badge bg-info">Jordan</span>
+                        <span class="badge bg-info">Taylor</span>
+                      </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                      <h6 class="mb-3">Recent Activity</h6>
+                      <ul class="list-unstyled">
+                        <li class="mb-2">
+                          <small class="text-muted">
+                            <i class="fas fa-plus-circle text-success me-1"></i>
+                            You added ₹2,450 for Dinner
+                          </small>
+                        </li>
+                        <li class="mb-2">
+                          <small class="text-muted">
+                            <i class="fas fa-user-plus text-info me-1"></i>
+                            Taylor joined the trip
+                          </small>
+                        </li>
+                        <li>
+                          <small class="text-muted">
+                            <i class="fas fa-calculator text-warning me-1"></i>
+                            Settlement calculated
+                          </small>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Slide 3: Settlement Summary -->
+              <div class="embla-demo__slide">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden hover-lift bg-white h-100">
+                  <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                      <i class="fas fa-exchange-alt me-2"></i>Settlement Summary
+                    </h5>
+                  </div>
+                  <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                      <span class="badge bg-warning">Pending</span>
+                      <span class="text-muted">Final Settlement</span>
+                    </div>
+                    
+                    <div class="settlement-summary mb-4 flex-grow-1">
+                      <h6 class="mb-3">Who owes whom:</h6>
+                      <div class="list-group">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                          <div>
+                            <strong>Alex</strong> owes <strong>You</strong>
+                          </div>
+                          <span class="badge bg-primary">₹1,200</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                          <div>
+                            <strong>Sam</strong> owes <strong>You</strong>
+                          </div>
+                          <span class="badge bg-primary">₹850</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                          <div>
+                            <strong>You</strong> owe <strong>Jordan</strong>
+                          </div>
+                          <span class="badge bg-danger">₹650</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-top mt-auto">
+                      <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Your net balance:</span>
+                        <span class="text-success fw-bold">₹1,400</span>
+                      </div>
+                      <p class="text-muted small mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        You are owed ₹1,400 in total
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Slide 4: Adding New Expense -->
+              <div class="embla-demo__slide">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden hover-lift bg-white h-100">
+                  <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                      <i class="fas fa-plus-circle me-2"></i>Adding New Expense
+                    </h5>
+                  </div>
+                  <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                      <span class="badge bg-info">Easy</span>
+                      <span class="text-muted">3 Simple Steps</span>
+                    </div>
+                    
+                    <div class="mb-4 flex-grow-1">
+                      <h6 class="mb-3">Simple 3-step process:</h6>
+                      <div class="d-flex align-items-center mb-3">
+                        <div class="badge bg-primary rounded-pill me-3">1</div>
+                        <div>
+                          <strong>Enter Details</strong>
+                          <p class="mb-0 text-muted small">Amount, description, date</p>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center mb-3">
+                        <div class="badge bg-primary rounded-pill me-3">2</div>
+                        <div>
+                          <strong>Select Payer</strong>
+                          <p class="mb-0 text-muted small">Who paid for this expense</p>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <div class="badge bg-primary rounded-pill me-3">3</div>
+                        <div>
+                          <strong>Split Expense</strong>
+                          <p class="mb-0 text-muted small">Choose how to divide among participants</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="alert alert-info mb-0 mt-auto">
+                      <i class="fas fa-lightbulb me-2"></i>
+                      <strong>Tip:</strong> Use itemized splitting for detailed expenses like groceries or receipts.
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Slide 5: Expense Analytics -->
+              <div class="embla-demo__slide">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden hover-lift bg-white h-100">
+                  <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">
+                      <i class="fas fa-chart-pie me-2"></i>Expense Analytics
+                    </h5>
+                  </div>
+                  <div class="card-body text-center">
+                    <div class="mb-4">
+                      <i class="fas fa-chart-bar fa-2x text-secondary"></i>
+                    </div>
+                    <h4 class="mb-3">Spending Insights</h4>
+                    <div class="text-start">
+                      <p><i class="fas fa-utensils text-success me-2"></i>Food & Dining: 35%</p>
+                      <p><i class="fas fa-bed text-primary me-2"></i>Accommodation: 40%</p>
+                      <p><i class="fas fa-car text-info me-2"></i>Transportation: 15%</p>
+                      <p><i class="fas fa-ticket-alt text-warning me-2"></i>Activities: 10%</p>
+                    </div>
+                    <div class="mt-4">
+                      <p class="text-muted">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Track category spending to identify areas for budget optimization
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Final CTA -->
+<div class="container py-7">
+  <div class="row">
+    <div class="col-lg-8 mx-auto text-center">
+      <div class="border rounded-4 p-5 bg-white">
+        <h2 class="display-4 fw-bold mb-4">Ready to Simplify Group Expenses?</h2>
+        <p class="lead mb-5">
+          Join thousands of travelers who save time and avoid payment disputes with our smart expense tracker.
+        </p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill">
+          <i class="fas fa-rocket me-2"></i>Get Started Free
+        </a>
+        <p class="mt-4 mb-0 text-muted">
+          No credit card required. Free forever.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  .py-7 {
+    padding-top: 5rem !important;
+    padding-bottom: 5rem !important;
+  }
+  
+  .mb-6 {
+    margin-bottom: 4rem !important;
+  }
+  
+  /* Embla Carousel Styles */
+  .embla-highlights,
+  .embla-demo {
+    --slide-spacing: 1rem;
+    --slide-size: 100%;
+    --slide-height: 500px;
+    padding: 1rem;
+    margin: 0 auto 2rem auto;
+    position: relative;
+  }
+  
+  @media (min-width: 768px) {
+    .embla-highlights,
+    .embla-demo {
+      --slide-size: 100%; /* Show 1 slide at once */
+      --slide-height: 500px;
+    }
+  }
+  
+  @media (min-width: 992px) {
+    .embla-highlights,
+    .embla-demo {
+      --slide-size: 100%; /* Show 1 slide at once on larger screens */
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    .embla-highlights,
+    .embla-demo {
+      --slide-size: 100%; /* Show 1 slide at once on extra large screens */
+    }
+  }
+  
+  .embla-highlights__viewport,
+  .embla-demo__viewport {
+    overflow: hidden;
+    border-radius: 1rem;
+  }
+  
+  .embla-highlights__container,
+  .embla-demo__container {
+    backface-visibility: hidden;
+    display: flex;
+    touch-action: pan-y;
+    margin-left: calc(var(--slide-spacing) * -1);
+  }
+  
+  .embla-highlights__slide,
+  .embla-demo__slide {
+    flex: 0 0 var(--slide-size);
+    min-width: 0;
+    padding-left: var(--slide-spacing);
+    position: relative;
+    display: flex;
+    height: var(--slide-height);
+  }
+  
+  /* Spotlight effect for active slide */
+  .embla-highlights__slide.is-selected,
+  .embla-demo__slide.is-selected {
+    transform: scale(1.02);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+  }
+  
+  /* Card styles */
+  .demo-card {
+    min-height: 500px;
+  }
+  
+  /* Hover lift effect */
+  .hover-lift {
+    transition: all 0.3s ease;
+    transform: translateY(0);
+    height: 100%;
+    border-radius: 1rem;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  /* Card header rounded corners */
+  .card-header {
+    border-radius: 1rem 1rem 0 0 !important;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 991px) {
+    .py-7 {
+      padding-top: 3rem !important;
+      padding-bottom: 3rem !important;
+    }
+    
+    .mb-6 {
+      margin-bottom: 2rem !important;
+    }
+    
+    .display-4 {
+      font-size: 2.5rem;
+    }
+    
+    .demo-card {
+      min-height: auto;
+    }
+    
+    .embla-highlights,
+    .embla-demo {
+      --slide-height: auto;
+      padding: 1rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .display-4 {
+      font-size: 2rem;
+    }
+    
+    .embla-highlights,
+    .embla-demo {
+      padding: 0.75rem;
+      --slide-size: 100%; /* Show 1 slide at once on mobile */
+    }
+    
+    .embla-highlights__slide,
+    .embla-demo__slide {
+      padding-left: 0.75rem;
+    }
+    
+    /* Reduce spotlight effect on mobile */
+    .embla-highlights__slide.is-selected,
+    .embla-demo__slide.is-selected {
+      transform: scale(1.01);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    }
+  }
+  
+  /* Additional fixes for carousel visibility */
+  .embla-highlights__slide .border.rounded-4.p-4.shadow-sm,
+  .embla-demo__slide .card.border-0.shadow-lg.rounded-4.overflow-hidden {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: white;
+    border: none !important;
+    width: 100%;
+  }
+  
+  /* Ensure consistent slide heights */
+  .embla-highlights__slide .border.rounded-4.p-4.shadow-sm.h-100,
+  .embla-demo__slide .card.border-0.shadow-lg.rounded-4.overflow-hidden.h-100 {
+    height: 100%;
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Function to add spotlight effect to selected slide
+    function addSpotlightEffect(embla) {
+      const slides = embla.slideNodes();
+      
+      function toggleSpotlight() {
+        slides.forEach((slide, index) => {
+          if (index === embla.selectedScrollSnap()) {
+            slide.classList.add('is-selected');
+          } else {
+            slide.classList.remove('is-selected');
+          }
+        });
+      }
+      
+      embla.on('select', toggleSpotlight);
+      toggleSpotlight();
+    }
+    
+    // Initialize Embla Carousel for highlights section
+    const highlightsCarousel = document.querySelector('#highlightsCarousel');
+    if (highlightsCarousel) {
+      const highlightsEmbla = EmblaCarousel(highlightsCarousel, {
+        loop: true,
+        dragFree: true,
+        align: 'center',
+        containScroll: 'trimSnaps',
+        slidesToScroll: 1,
+        slidesPerView: 1
+      });
+      
+      addSpotlightEffect(highlightsEmbla);
+    }
+    
+    // Initialize Embla Carousel for demo section
+    const demoCarousel = document.querySelector('#demoCarousel');
+    if (demoCarousel) {
+      const demoEmbla = EmblaCarousel(demoCarousel, {
+        loop: true,
+        dragFree: true,
+        align: 'center',
+        containScroll: 'trimSnaps',
+        slidesToScroll: 1,
+        slidesPerView: 1
+      });
+      
+      addSpotlightEffect(demoEmbla);
+    }
+  });
+</script>
 {% endblock %}

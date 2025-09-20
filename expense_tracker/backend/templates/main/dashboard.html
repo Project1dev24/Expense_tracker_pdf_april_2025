@@ -5,65 +5,223 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1 class="mb-3">Dashboard</h1>
-        <p class="lead">Welcome back, {{ current_user.name }}!</p>
+        <h1 class="mb-3 display-5 fw-bold">Dashboard <span class="badge bg-primary bg-gradient rounded-pill fs-6 align-middle">Beta</span></h1>
+        <p class="lead">Welcome back, <span class="fw-bold text-primary">{{ current_user.name }}</span>!</p>
     </div>
-    <div class="col-md-4 text-end">
-        <a href="{{ url_for('trips.add_trip') }}" class="btn btn-primary">
+    <div class="col-md-4 text-end d-flex align-items-center justify-content-end">
+        <div class="dropdown me-2">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="quickActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-bolt me-1"></i> Quick Actions
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quickActionsDropdown">
+                <li><a class="dropdown-item" href="{{ url_for('trips.add_trip') }}"><i class="fas fa-plus me-2 text-primary"></i>New Trip</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-file-invoice-dollar me-2 text-success"></i>Quick Expense</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-sync me-2 text-info"></i>Sync Data</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2 text-secondary"></i>Settings</a></li>
+            </ul>
+        </div>
+        <a href="{{ url_for('trips.add_trip') }}" class="btn btn-primary btn-lg rounded-pill shadow-sm">
             <i class="fas fa-plus me-2"></i>New Trip
         </a>
     </div>
 </div>
 
+<!-- Summary Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3 mb-md-0">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift bg-white h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-circle bg-primary bg-opacity-10 text-primary me-3">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h6 class="card-title mb-0">Balance</h6>
+                </div>
+                {% if total_balance > 0 %}
+                <h3 class="text-success mb-1">₹{{ total_balance|round(2) }}</h3>
+                <p class="text-muted small mb-0"><i class="fas fa-arrow-up text-success me-1"></i> You will receive</p>
+                {% elif total_balance < 0 %}
+                <h3 class="text-danger mb-1">₹{{ (total_balance * -1)|round(2) }}</h3>
+                <p class="text-muted small mb-0"><i class="fas fa-arrow-down text-danger me-1"></i> You need to pay</p>
+                {% else %}
+                <h3 class="text-muted mb-1">₹0.00</h3>
+                <p class="text-muted small mb-0"><i class="fas fa-equals me-1"></i> All settled up</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 mb-md-0">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift bg-white h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-circle bg-warning bg-opacity-10 text-warning me-3">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <h6 class="card-title mb-0">Total Spent</h6>
+                </div>
+                <h3 class="text-warning mb-1">₹{{ total_spent|round(2) }}</h3>
+                <p class="text-muted small mb-0">Across all trips</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 mb-md-0">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift bg-white h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-circle bg-info bg-opacity-10 text-info me-3">
+                        <i class="fas fa-suitcase-rolling"></i>
+                    </div>
+                    <h6 class="card-title mb-0">Total Trips</h6>
+                </div>
+                <h3 class="text-info mb-1">{{ total_trips if total_trips is defined else recent_trips|length if recent_trips else 0 }}</h3>
+                <p class="text-muted small mb-0">All your trips</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trips Carousel -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-suitcase me-2"></i>Your Trips
+                </h5>
+                <a href="{{ url_for('trips.list_trips') }}" class="btn btn-sm btn-light">
+                    <i class="fas fa-th-list me-1"></i>View All
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_trips %}
+                <div class="embla-dashboard">
+                    <div class="embla-dashboard__viewport" id="tripsCarousel">
+                        <div class="embla-dashboard__container">
+                            {% for trip in recent_trips %}
+                            <div class="embla-dashboard__slide">
+                                <div class="card border-0 shadow-lg rounded-4 overflow-hidden h-100">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h5 class="card-title mb-1">{{ trip.name }}</h5>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-{{ 'success' if trip.start_date.date() > today else 'secondary' }} me-2">{{ trip.end_date|trip_time_label }}</span>
+                                                    <small class="text-muted">{{ trip.start_date.strftime('%d %b %Y') }} - {{ trip.end_date.strftime('%d %b %Y') }}</small>
+                                                </div>
+                                            </div>
+                                            <span class="badge bg-primary">{{ trip.expenses.count() }} expenses</span>
+                                        </div>
+                                        
+                                        {% if trip.description %}
+                                        <p class="card-text text-muted mb-3">{{ trip.description|truncate(100) }}</p>
+                                        {% endif %}
+                                        
+                                        <div class="mt-auto">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <div>
+                                                    <small class="text-muted">Participants</small>
+                                                    <div class="fw-bold">{{ trip.get_participants_list()|length + 1 }}</div>
+                                                </div>
+                                                <div>
+                                                    <small class="text-muted">Total Spent</small>
+                                                    {% set total_spent = 0 %}
+                                                    {% for expense in trip.expenses %}
+                                                        {% if expense.payer_id == current_user.id %}
+                                                            {% set total_spent = total_spent + expense.amount %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    <div class="fw-bold text-primary">₹{{ total_spent|round(2) }}</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-primary w-100 rounded-pill">
+                                                <i class="fas fa-eye me-1"></i>View Trip Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center p-5">
+                    <div class="empty-state-icon mb-3">
+                        <i class="fas fa-suitcase-rolling fa-3x text-muted opacity-50"></i>
+                    </div>
+                    <p class="mb-3">You don't have any trips yet.</p>
+                    <a href="{{ url_for('trips.add_trip') }}" class="btn btn-primary rounded-pill">
+                        <i class="fas fa-plus me-2"></i>Create your first trip
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-wallet me-2"></i>Your Balance
+                    <i class="fas fa-receipt me-2"></i>Your Paid Expenses
                 </h5>
             </div>
-            <div class="card-body text-center">
-                {% if total_balance > 0 %}
-                <h3 class="text-success">₹{{ total_balance|round(2) }}</h3>
-                <p>You are owed money</p>
-                {% elif total_balance < 0 %}
-                <h3 class="text-danger">₹{{ (total_balance * -1)|round(2) }}</h3>
-                <p>You owe money</p>
+            <div class="card-body p-0">
+                {% if recent_expenses %}
+                <div class="list-group list-group-flush">
+                    {% for item in recent_expenses %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <h6 class="mb-1">{{ item.trip.name }}</h6>
+                                <p class="mb-1 text-muted">{{ item.expense.description }}</p>
+                                <small class="text-muted">{{ item.expense.date.strftime('%d %b %Y') }}</small>
+                            </div>
+                            <div class="text-end">
+                                <h6 class="mb-1">₹{{ item.expense.amount|round(2) }}</h6>
+                                <small class="text-muted">You paid</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
                 {% else %}
-                <h3>₹0.00</h3>
-                <p>You're all settled up!</p>
+                <div class="text-center p-4">
+                    <div class="empty-state-icon mb-3">
+                        <i class="fas fa-receipt fa-3x text-muted opacity-50"></i>
+                    </div>
+                    <p class="mb-0">You haven't paid any expenses recently.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
-    <div class="col-md-8 mb-4">
-        <div class="card h-100">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-suitcase me-2"></i>Recent Trips
+                    <i class="fas fa-history me-2"></i>Older Trips
                 </h5>
             </div>
             <div class="card-body p-0">
-                {% if recent_trips %}
+                {% if older_trips %}
                 <div class="list-group list-group-flush">
-                    {% for trip in recent_trips %}
-                    <div class="list-group-item">
-                        <div class="d-flex flex-column flex-lg-row justify-content-between">
-                            <div class="trip-info mb-3 mb-lg-0">
+                    {% for trip in older_trips %}
+                    <div class="list-group-item trip-item">
+                        <div class="d-flex flex-column">
+                            <div class="trip-info">
                                 <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="text-decoration-none">
                                     <h5 class="mb-2">{{ trip.name }}</h5>
-                                    <small class="text-muted d-block mb-2">{{ trip.start_date.strftime('%d %b %Y') }} - {{ trip.end_date.strftime('%d %b %Y') }}</small>
-                                    <p class="mb-0">{{ trip.description|truncate(100) }}</p>
-                                </a>
-                            </div>
-                            <div class="trip-actions d-flex flex-row justify-content-between justify-content-lg-end align-items-start gap-2">
-                                <a href="{{ url_for('expenses.add_expense', trip_id=trip.id) }}" class="btn btn-success btn-sm flex-fill flex-lg-grow-0">
-                                    <i class="fas fa-plus me-1"></i>Add Expense
-                                </a>
-                                <a href="{{ url_for('expenses.list_expenses', trip_id=trip.id) }}" class="btn btn-outline-primary btn-sm flex-fill flex-lg-grow-0">
-                                    <i class="fas fa-list me-1"></i>View Expenses
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-secondary me-2">{{ trip.end_date|trip_time_label }}</span>
+                                        <small class="text-muted">{{ trip.start_date.strftime('%d %b %Y') }} - {{ trip.end_date.strftime('%d %b %Y') }}</small>
+                                    </div>
+                                    <p class="mb-0 text-muted">{{ trip.description|truncate(100) }}</p>
                                 </a>
                             </div>
                         </div>
@@ -72,75 +230,235 @@
                 </div>
                 {% else %}
                 <div class="text-center p-4">
-                    <p class="mb-0">You don't have any trips yet.</p>
-                    <a href="{{ url_for('trips.add_trip') }}" class="btn btn-sm btn-outline-primary mt-2">Create your first trip</a>
+                    <div class="empty-state-icon mb-3">
+                        <i class="fas fa-history fa-3x text-muted opacity-50"></i>
+                    </div>
+                    <p class="mb-0">No older trips found.</p>
                 </div>
                 {% endif %}
             </div>
-            {% if recent_trips %}
-            <div class="card-footer text-end">
-                <a href="{{ url_for('trips.list_trips') }}" class="btn btn-sm btn-outline-primary">View all trips</a>
-            </div>
-            {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
 
-{% if recent_expenses %}
-<div class="row">
-    <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-receipt me-2"></i>Recent Expenses
-                </h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Trip</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                                <th>Paid By</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in recent_expenses %}
-                            <tr>
-                                <td>{{ item.expense.date.strftime('%d %b %Y') }}</td>
-                                <td>
-                                    <a href="{{ url_for('trips.view_trip', trip_id=item.trip.id) }}">
-                                        {{ item.trip.name }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="{{ url_for('expenses.view_expense', trip_id=item.trip.id, expense_id=item.expense.id) }}">
-                                        {{ item.expense.description }}
-                                    </a>
-                                </td>
-                                <td>₹{{ item.expense.amount|round(2) }}</td>
-                                <td>
-                                    {% if item.expense.payer_id|string == current_user.id|string %}
-                                    <span class="badge bg-primary">You</span>
-                                    {% else %}
-                                    {% if item.expense.payer_id|string and (item.expense.payer_id|string).startswith('unregistered_') %}
-                                        {{ (item.expense.payer_id|string).replace('unregistered_', '') }} (Unregistered)
-                                    {% else %}
-                                        {{ item.payer_name if item.payer_name else "Unknown" }}
-                                    {% endif %}
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
+{% block styles %}
+<style>
+  /* Hover lift effect */
+  .hover-lift {
+    transition: all 0.3s ease;
+    transform: translateY(0);
+    background-color: white;
+    border-radius: 1rem;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  /* Card header rounded corners */
+  .card-header {
+    border-radius: 1rem 1rem 0 0 !important;
+  }
+  
+  /* Custom scrollbar for list groups */
+  .list-group-flush {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  /* Custom scrollbar styling */
+  .list-group-flush::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .list-group-flush::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  .list-group-flush::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  .list-group-flush::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+  }
+  
+  /* New styles for enhanced UI */
+  .icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .empty-state-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+  }
+  
+  /* Expense item styling */
+  .list-group-item {
+    border-bottom: 1px solid #eee;
+  }
+  
+  .list-group-item:last-child {
+    border-bottom: none;
+  }
+  
+  /* Trip item hover effect */
+  .trip-item {
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+  }
+  
+  .trip-item:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  
+  /* Trip link styling */
+  .trip-item a {
+    color: inherit;
+  }
+  
+  .trip-item:hover a {
+    text-decoration: none;
+  }
+  
+  /* Embla Carousel Styles */
+  .embla-dashboard {
+    max-width: 100%;
+    margin: auto;
+    --slide-height: 450px;
+    --slide-spacing: 1rem;
+    --slide-size: 100%;
+    padding: 1rem;
+  }
+
+  /* Tablet: Show partial views of adjacent slides */
+  @media (min-width: 768px) {
+      .embla-dashboard {
+          --slide-size: 85%;
+          --slide-height: 450px;
+      }
+  }
+
+  /* Laptop/Desktop: Show more slides with partial views */
+  @media (min-width: 992px) {
+      .embla-dashboard {
+          --slide-size: 70%;
+      }
+  }
+
+  /* Large Desktop: Keep the same view */
+  @media (min-width: 1200px) {
+      .embla-dashboard {
+          --slide-size: 70%;
+      }
+  }
+
+  .embla-dashboard__viewport {
+      overflow: hidden;
+  }
+
+  .embla-dashboard__container {
+      backface-visibility: hidden;
+      display: flex;
+      touch-action: pan-y;
+      margin-left: calc(var(--slide-spacing) * -1);
+  }
+
+  .embla-dashboard__slide {
+      transform: translate3d(0, 0, 0);
+      flex: 0 0 var(--slide-size);
+      min-width: 0;
+      padding-left: var(--slide-spacing);
+      position: relative;
+      display: flex;
+      height: var(--slide-height);
+  }
+
+  /* Add spotlight effect for active slide */
+  .embla-dashboard__slide.embla__slide--selected {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      z-index: 10;
+  }
+
+  /* Fade non-active slides */
+  .embla-dashboard__slide:not(.embla__slide--selected) {
+      opacity: 0.7;
+      transform: scale(0.95);
+      transition: all 0.3s ease;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 991px) {
+      .embla-dashboard {
+          --slide-height: auto;
+          padding: 1rem;
+      }
+  }
+
+  @media (max-width: 768px) {
+      .embla-dashboard {
+          padding: 0.75rem;
+          --slide-size: 100%;
+      }
+      
+      .embla-dashboard__slide {
+          padding-left: 0.75rem;
+      }
+      
+      /* Remove spotlight effect on mobile */
+      .embla-dashboard__slide {
+          opacity: 1;
+          transform: scale(1);
+      }
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Embla Carousel for trips section
+    const tripsCarousel = document.querySelector('#tripsCarousel');
+    if (tripsCarousel) {
+      const tripsEmbla = EmblaCarousel(tripsCarousel, {
+        loop: true,
+        dragFree: true,
+        align: 'start',
+        containScroll: 'trimSnaps',
+        slidesToScroll: 1
+      });
+      
+      // Update slide styling based on selection
+      const slides = tripsCarousel.querySelectorAll('.embla-dashboard__slide');
+      
+      const updateSlideStyles = () => {
+        slides.forEach((slide, index) => {
+          if (index === tripsEmbla.selectedScrollSnap()) {
+            slide.classList.add('embla__slide--selected');
+          } else {
+            slide.classList.remove('embla__slide--selected');
+          }
+        });
+      };
+      
+      tripsEmbla.on('select', updateSlideStyles);
+      updateSlideStyles(); // Initial update
+    }
+  });
+</script>
 {% endblock %}

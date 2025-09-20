@@ -38,6 +38,12 @@
                         </p>
                         <p class="card-text">
                             <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ trip.end_date|trip_time_label }}
+                            </small>
+                        </p>
+                        <p class="card-text">
+                            <small class="text-muted">
                                 <i class="fas fa-users me-1"></i>
                                 {{ trip.get_participants_list()|length + 1 }} participants
                             </small>
