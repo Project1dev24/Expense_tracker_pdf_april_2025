@@ -18,4 +18,4 @@ if __name__ == '__main__':
     # Run the application
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
     # Use port 5003 instead of 5001 to avoid conflicts
-    app.run(debug=debug, host='127.0.0.1', port=5003)
+    app.run(debug=debug, host='0.0.0.0', port=5003)

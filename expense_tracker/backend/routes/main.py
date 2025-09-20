@@ -23,13 +23,13 @@ def dashboard():
     # Get recent trips (for display in the trips section) - sorted by start date (most recent first)
     recent_trips = sorted(trips, key=lambda t: t.start_date, reverse=True)[:5]
     
-    # Get completed trips (trips that have ended)
-    today = date.today()
-    completed_trips = [trip for trip in trips if trip.end_date.date() < today]
-    
     # Get older trips (completed trips that are more than 30 days old)
+    today = date.today()
     thirty_days_ago = today - timedelta(days=30)
-    older_trips = [trip for trip in completed_trips if trip.end_date.date() < thirty_days_ago]
+    older_trips = []
+    for trip in trips:
+        if trip.end_date.date() < today and trip.end_date.date() < thirty_days_ago:
+            older_trips.append(trip)
     # Sort older trips by end date (oldest first)
     older_trips = sorted(older_trips, key=lambda t: t.end_date, reverse=True)
     
@@ -95,7 +95,6 @@ def dashboard():
                           recent_trips=recent_trips,
                           recent_expenses=user_paid_expenses,
                           total_balance=total_balance,
-                          completed_trips=completed_trips,
                           total_trips=total_trips,
                           total_spent=total_spent,
                           today=today,

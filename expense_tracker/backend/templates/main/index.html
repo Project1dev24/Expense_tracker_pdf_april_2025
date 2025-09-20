@@ -692,14 +692,26 @@
     position: relative;
     display: flex;
     height: var(--slide-height);
+    opacity: 0.7;
+    transform: scale(0.95);
+    transition: all 0.3s ease;
   }
   
   /* Spotlight effect for active slide */
   .embla-highlights__slide.is-selected,
   .embla-demo__slide.is-selected {
-    transform: scale(1.02);
+    opacity: 1;
+    transform: scale(1);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     z-index: 10;
+  }
+  
+  /* Fade non-active slides */
+  .embla-highlights__slide:not(.is-selected),
+  .embla-demo__slide:not(.is-selected) {
+    opacity: 0.7;
+    transform: scale(0.95);
+    transition: all 0.3s ease;
   }
   
   /* Card styles */
@@ -767,11 +779,19 @@
       padding-left: 0.75rem;
     }
     
-    /* Reduce spotlight effect on mobile */
+    /* Spotlight effect on mobile */
     .embla-highlights__slide.is-selected,
     .embla-demo__slide.is-selected {
-      transform: scale(1.01);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      z-index: 10;
+    }
+    
+    .embla-highlights__slide:not(.is-selected),
+    .embla-demo__slide:not(.is-selected) {
+      opacity: 0.7;
+      transform: scale(0.95);
     }
   }
   
@@ -816,6 +836,7 @@
       }
       
       embla.on('select', toggleSpotlight);
+      embla.on('scroll', toggleSpotlight); // Update during scroll for smooth transitions
       toggleSpotlight();
     }
     
