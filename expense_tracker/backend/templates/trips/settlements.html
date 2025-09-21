@@ -1,19 +1,117 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Settlements for {{ trip.name }} -
+Trip Expense Tracker{% endblock %} {% block styles %}
+<style>
+    :root {
+        --body-bg: #f4f1ea;
+        --panel-bg: #ffffff;
+        --border-color: #000000;
+        --theme-accent-color: #aec6cf; /* Default: Pastel Blue */
+        --theme-contrast-color: #000000; /* Default for light accent */
+        --secondary-action-color: #85a0aa; /* Default: Darkened Pastel Blue */
+        --border-width: 2px;
+        --shadow-offset: 5px;
+    }
 
-{% block title %}Settlements for {{ trip.name }} - Trip Expense Tracker{% endblock %}
+    body {
+        background-color: var(--body-bg);
+        font-family:
+            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+            Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+            "Segoe UI Symbol";
+    }
 
-{% block content %}
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .fw-bold {
+        font-weight: 700 !important;
+        color: var(--border-color);
+    }
+
+    .btn {
+        border: var(--border-width) solid var(--border-color);
+        box-shadow: 3px 3px 0px var(--border-color);
+        border-radius: 0.5rem;
+        font-weight: 700;
+        transition: all 0.15s ease-out;
+        padding: 0.5rem 1rem;
+    }
+
+    .btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0px var(--border-color);
+    }
+
+    .btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0px var(--border-color);
+    }
+
+    .btn-primary {
+        background-color: var(--theme-accent-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-primary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-action-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel {
+        background-color: var(--panel-bg);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: 1rem;
+        box-shadow: var(--shadow-offset) var(--shadow-offset) 0px
+            var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* Ensures children conform to rounded corners */
+    }
+
+    .panel-header {
+        padding: 0.75rem 1.25rem;
+        border-bottom: var(--border-width) solid var(--border-color);
+        background-color: var(--theme-accent-color);
+    }
+    .panel-header h5,
+    .panel-header h4 {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel-body {
+        padding: 1rem;
+        flex-grow: 1;
+    }
+</style>
+{% endblock %} {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
         <h1 class="mb-2">Settlements</h1>
         <p class="text-muted">
-            <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}">{{ trip.name }}</a>
+            <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}"
+                >{{ trip.name }}</a
+            >
             <i class="fas fa-calendar ms-3 me-1"></i>
-            {{ trip.start_date.strftime('%d %b %Y') }} - {{ trip.end_date.strftime('%d %b %Y') }}
+            {{ trip.start_date.strftime('%d %b %Y') }} - {{
+            trip.end_date.strftime('%d %b %Y') }}
         </p>
     </div>
     <div class="col-md-4 text-end">
-        <a href="{{ url_for('trips.export_pdf', trip_id=trip.id) }}" class="btn btn-primary">
+        <a
+            href="{{ url_for('trips.export_pdf', trip_id=trip.id) }}"
+            class="btn btn-primary"
+        >
             <i class="fas fa-file-pdf me-2"></i>Export as PDF
         </a>
     </div>
@@ -21,16 +119,17 @@
 
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Settlement Summary</h5>
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="mb-0">Settlement Summary</h5>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    This report shows the optimal way to settle all debts with the minimum number of transactions.
+                    This report shows the optimal way to settle all debts with
+                    the minimum number of transactions.
                 </div>
-                
+
                 {% if settlements %}
                 <div class="table-responsive">
                     <table class="table table-bordered">
@@ -45,22 +144,34 @@
                             {% for settlement in settlements %}
                             <tr>
                                 <td>
-                                    {% if (settlement.from_user|string).startswith('unregistered_') %}
-                                        {{ user_map.get(settlement.from_user, (settlement.from_user|string)|replace('unregistered_', '')) }}
-                                        <span class="badge bg-info">unregistered</span>
-                                    {% else %}
-                                        {{ user_map.get(settlement.from_user, 'Unknown') }}
-                                    {% endif %}
+                                    {% if
+                                    (settlement.from_user|string).startswith('unregistered_')
+                                    %} {{ user_map.get(settlement.from_user,
+                                    (settlement.from_user|string)|replace('unregistered_',
+                                    '')) }}
+                                    <span class="badge bg-info"
+                                        >unregistered</span
+                                    >
+                                    {% else %} {{
+                                    user_map.get(settlement.from_user,
+                                    'Unknown') }} {% endif %}
                                 </td>
                                 <td>
-                                    {% if (settlement.to_user|string).startswith('unregistered_') %}
-                                        {{ user_map.get(settlement.to_user, (settlement.to_user|string)|replace('unregistered_', '')) }}
-                                        <span class="badge bg-info">unregistered</span>
-                                    {% else %}
-                                        {{ user_map.get(settlement.to_user, 'Unknown') }}
-                                    {% endif %}
+                                    {% if
+                                    (settlement.to_user|string).startswith('unregistered_')
+                                    %} {{ user_map.get(settlement.to_user,
+                                    (settlement.to_user|string)|replace('unregistered_',
+                                    '')) }}
+                                    <span class="badge bg-info"
+                                        >unregistered</span
+                                    >
+                                    {% else %} {{
+                                    user_map.get(settlement.to_user, 'Unknown')
+                                    }} {% endif %}
                                 </td>
-                                <td class="text-end">₹{{ settlement.amount|round(2) }}</td>
+                                <td class="text-end">
+                                    ₹{{ settlement.amount|round(2) }}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -79,11 +190,11 @@
 
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Individual Balances</h5>
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="mb-0">Individual Balances</h5>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-light">
@@ -95,27 +206,42 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for participant_id, balance in balances.items() %}
+                            {% for participant_id, balance in balances.items()
+                            %}
                             <tr>
                                 <td>
-                                    {% if (participant_id|string).startswith('unregistered_') %}
-                                        {{ user_map.get(participant_id, (participant_id|string)|replace('unregistered_', '')) }}
-                                        <span class="badge bg-info">unregistered</span>
-                                    {% else %}
-                                        {{ user_map.get(participant_id, 'Unknown') }}
-                                    {% endif %}
+                                    {% if
+                                    (participant_id|string).startswith('unregistered_')
+                                    %} {{ user_map.get(participant_id,
+                                    (participant_id|string)|replace('unregistered_',
+                                    '')) }}
+                                    <span class="badge bg-info"
+                                        >unregistered</span
+                                    >
+                                    {% else %} {{ user_map.get(participant_id,
+                                    'Unknown') }} {% endif %}
                                 </td>
                                 <td class="text-end">
-                                    ₹{{ total_paid.get(participant_id, 0)|round(2) }}
+                                    ₹{{ total_paid.get(participant_id,
+                                    0)|round(2) }}
                                 </td>
                                 <td class="text-end">
-                                    ₹{{ total_share.get(participant_id, 0)|round(2) }}
+                                    ₹{{ total_share.get(participant_id,
+                                    0)|round(2) }}
                                 </td>
                                 <td class="text-end">
                                     {% if balance > 0 %}
-                                    <span class="text-success">{{ user_map.get(participant_id, 'Unknown') }} should receive ₹{{ balance|round(2) }}</span>
+                                    <span class="text-success"
+                                        >{{ user_map.get(participant_id,
+                                        'Unknown') }} should receive ₹{{
+                                        balance|round(2) }}</span
+                                    >
                                     {% elif balance < 0 %}
-                                    <span class="text-danger">{{ user_map.get(participant_id, 'Unknown') }} should give ₹{{ (balance * -1)|round(2) }}</span>
+                                    <span class="text-danger"
+                                        >{{ user_map.get(participant_id,
+                                        'Unknown') }} should give ₹{{ (balance *
+                                        -1)|round(2) }}</span
+                                    >
                                     {% else %}
                                     <span class="text-muted">Settled up</span>
                                     {% endif %}
@@ -132,11 +258,11 @@
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Expense Breakdown</h5>
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="mb-0">Expense Breakdown</h5>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-light">
@@ -154,33 +280,44 @@
                             <tr>
                                 <td>{{ expense.date.strftime('%d %b %Y') }}</td>
                                 <td>{{ expense.description }}</td>
-                                <td class="text-end">₹{{ expense.amount|round(2) }}</td>
+                                <td class="text-end">
+                                    ₹{{ expense.amount|round(2) }}
+                                </td>
                                 <td>
-                                    {% if (expense.payer_id|string).startswith('unregistered_') %}
-                                        {{ user_map.get(expense.payer_id, (expense.payer_id|string)|replace('unregistered_', '')) }}
-                                        <span class="badge bg-info">unregistered</span>
-                                    {% elif expense.payer_id == 'group_everyone' %}
-                                        Everyone (Group Payment)
-                                    {% else %}
-                                        {{ user_map.get(expense.payer_id|string, 'Unknown') }}
-                                    {% endif %}
+                                    {% if
+                                    (expense.payer_id|string).startswith('unregistered_')
+                                    %} {{ user_map.get(expense.payer_id,
+                                    (expense.payer_id|string)|replace('unregistered_',
+                                    '')) }}
+                                    <span class="badge bg-info"
+                                        >unregistered</span
+                                    >
+                                    {% elif expense.payer_id == 'group_everyone'
+                                    %} Everyone (Group Payment) {% else %} {{
+                                    user_map.get(expense.payer_id|string,
+                                    'Unknown') }} {% endif %}
                                 </td>
                                 <td>
                                     {% if expense.split_method == 'equal' %}
-                                    Equal
-                                    {% elif expense.split_method == 'exact' %}
-                                    Exact
-                                    {% elif expense.split_method == 'itemized' %}
-                                    Itemized
-                                    {% endif %}
+                                    Equal {% elif expense.split_method ==
+                                    'exact' %} Exact {% elif
+                                    expense.split_method == 'itemized' %}
+                                    Itemized {% endif %}
                                 </td>
                                 <td>
-                                    {% for participant_id in expense.get_participants_list() %}
-                                    <span class="badge bg-primary me-1">{{ user_map.get(participant_id, 'Unknown') }}</span>
-                                    {% endfor %}
-                                    {% set unregistered_participants = expense.get_unregistered_participants() %}
+                                    {% for participant_id in
+                                    expense.get_participants_list() %}
+                                    <span class="badge bg-primary me-1"
+                                        >{{ user_map.get(participant_id,
+                                        'Unknown') }}</span
+                                    >
+                                    {% endfor %} {% set
+                                    unregistered_participants =
+                                    expense.get_unregistered_participants() %}
                                     {% for name in unregistered_participants %}
-                                    <span class="badge bg-info me-1">{{ name|title }}</span>
+                                    <span class="badge bg-info me-1"
+                                        >{{ name|title }}</span
+                                    >
                                     {% endfor %}
                                 </td>
                             </tr>

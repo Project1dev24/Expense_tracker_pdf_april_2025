@@ -228,65 +228,7 @@ styles %}
 {% endblock %} {% block scripts %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Theme Selector
-        const themeSelector = document.querySelector(".theme-selector");
-        const themeDots = themeSelector.querySelectorAll(".theme-dot");
-        const root = document.documentElement;
-
-        const getContrastColor = (hex) => {
-            if (hex.indexOf("#") === 0) {
-                hex = hex.slice(1);
-            }
-            const r = parseInt(hex.slice(0, 2), 16);
-            const g = parseInt(hex.slice(2, 4), 16);
-            const b = parseInt(hex.slice(4, 6), 16);
-            const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-            return yiq >= 128 ? "#000000" : "#FFFFFF";
-        };
-
-        const darkenColor = (hex, percent) => {
-            if (hex.indexOf("#") === 0) {
-                hex = hex.slice(1);
-            }
-            let r = parseInt(hex.slice(0, 2), 16);
-            let g = parseInt(hex.slice(2, 4), 16);
-            let b = parseInt(hex.slice(4, 6), 16);
-
-            r = Math.floor(r * (1 - percent / 100));
-            g = Math.floor(g * (1 - percent / 100));
-            b = Math.floor(b * (1 - percent / 100));
-
-            const toHex = (c) => ("0" + c.toString(16)).slice(-2);
-
-            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-        };
-
-        const applyTheme = (color) => {
-            const contrastColor = getContrastColor(color);
-            const secondaryColor = darkenColor(color, 15);
-
-            root.style.setProperty("--theme-accent-color", color);
-            root.style.setProperty("--theme-contrast-color", contrastColor);
-            root.style.setProperty("--secondary-action-color", secondaryColor);
-
-            localStorage.setItem("dashboardThemeColor", color);
-            themeDots.forEach((dot) => {
-                dot.classList.toggle("active", dot.dataset.color === color);
-            });
-        };
-
-        themeDots.forEach((dot) => {
-            dot.addEventListener("click", (e) => {
-                applyTheme(e.target.dataset.color);
-            });
-        });
-
-        const savedColor = localStorage.getItem("dashboardThemeColor");
-        if (savedColor) {
-            applyTheme(savedColor);
-        } else {
-            applyTheme(themeDots[0].dataset.color);
-        }
+        // The theme selector is now handled by the global script in base.html
     });
 </script>
 {% endblock %}

@@ -1,23 +1,123 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Manage Payments - {{ trip.name }}{%
+endblock %} {% block styles %}
+<style>
+    :root {
+        --body-bg: #f4f1ea;
+        --panel-bg: #ffffff;
+        --border-color: #000000;
+        --theme-accent-color: #aec6cf; /* Default: Pastel Blue */
+        --theme-contrast-color: #000000; /* Default for light accent */
+        --secondary-action-color: #85a0aa; /* Default: Darkened Pastel Blue */
+        --border-width: 2px;
+        --shadow-offset: 5px;
+    }
 
-{% block title %}Manage Payments - {{ trip.name }}{% endblock %}
+    body {
+        background-color: var(--body-bg);
+        font-family:
+            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+            Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+            "Segoe UI Symbol";
+    }
 
-{% block content %}
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .fw-bold {
+        font-weight: 700 !important;
+        color: var(--border-color);
+    }
+
+    .btn {
+        border: var(--border-width) solid var(--border-color);
+        box-shadow: 3px 3px 0px var(--border-color);
+        border-radius: 0.5rem;
+        font-weight: 700;
+        transition: all 0.15s ease-out;
+        padding: 0.5rem 1rem;
+    }
+
+    .btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0px var(--border-color);
+    }
+
+    .btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0px var(--border-color);
+    }
+
+    .btn-primary {
+        background-color: var(--theme-accent-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-primary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-action-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel {
+        background-color: var(--panel-bg);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: 1rem;
+        box-shadow: var(--shadow-offset) var(--shadow-offset) 0px
+            var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* Ensures children conform to rounded corners */
+    }
+
+    .panel-header {
+        padding: 0.75rem 1.25rem;
+        border-bottom: var(--border-width) solid var(--border-color);
+        background-color: var(--theme-accent-color);
+    }
+    .panel-header h5,
+    .panel-header h4 {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel-body {
+        padding: 1rem;
+        flex-grow: 1;
+    }
+</style>
+{% endblock %} {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}">{{ trip.name }}</a></li>
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}"
+                        >{{ trip.name }}</a
+                    >
+                </li>
                 <li class="breadcrumb-item active">Manage General Payments</li>
             </ol>
         </nav>
         <h1 class="mb-2">Manage General Payments</h1>
         <p class="text-muted">
-            Add payments made by participants that aren't tied to specific expenses. These will be included in the balance calculations.
+            Add payments made by participants that aren't tied to specific
+            expenses. These will be included in the balance calculations.
         </p>
     </div>
     <div class="col-md-4 text-end">
-        <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-outline-primary">
+        <a
+            href="{{ url_for('trips.view_trip', trip_id=trip.id) }}"
+            class="btn btn-secondary"
+        >
             <i class="fas fa-arrow-left me-2"></i>Back to Trip
         </a>
     </div>
@@ -26,11 +126,11 @@
 <div class="row">
     <!-- Current Payments -->
     <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Current General Payments</h5>
+        <div class="panel h-100">
+            <div class="panel-header">
+                <h5 class="mb-0">Current General Payments</h5>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 {% if payments %}
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -49,43 +149,53 @@
                             <tr>
                                 <td>{{ payment.date }}</td>
                                 <td>
-                                    {% if payment.type == 'unregistered' %}
-                                    {{ payment.name }} <span class="badge bg-info">unregistered</span>
-                                    {% else %}
-                                    {{ payment.name }}
-                                    {% if payment.id|string == current_user.id|string %}
+                                    {% if payment.type == 'unregistered' %} {{
+                                    payment.name }}
+                                    <span class="badge bg-info"
+                                        >unregistered</span
+                                    >
+                                    {% else %} {{ payment.name }} {% if
+                                    payment.id|string == current_user.id|string
+                                    %}
                                     <span class="badge bg-primary">You</span>
-                                    {% endif %}
-                                    {% endif %}
+                                    {% endif %} {% endif %}
                                 </td>
                                 <td>{{ payment.description }}</td>
                                 <td>
-                                    {% if payment.expense_id %}
-                                        {% for expense in expenses %}
-                                            {% if expense.id|int == payment.expense_id|int %}
-                                                <a href="{{ url_for('expenses.view_expense', trip_id=trip.id, expense_id=expense.id) }}">
-                                                    {{ expense.description }}
-                                                </a>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">None</span>
+                                    {% if payment.expense_id %} {% for expense
+                                    in expenses %} {% if expense.id|int ==
+                                    payment.expense_id|int %}
+                                    <a
+                                        href="{{ url_for('expenses.view_expense', trip_id=trip.id, expense_id=expense.id) }}"
+                                    >
+                                        {{ expense.description }}
+                                    </a>
+                                    {% endif %} {% endfor %} {% else %}
+                                    <span class="text-muted">None</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-end">₹{{ payment.amount|round(2) }}</td>
+                                <td class="text-end">
+                                    ₹{{ payment.amount|round(2) }}
+                                </td>
                                 <td>
                                     <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-outline-primary edit-payment" 
-                                                data-payment-index="{{ loop.index0 }}"
-                                                data-participant-id="{{ payment.id }}"
-                                                data-amount="{{ payment.amount }}"
-                                                data-description="{{ payment.description }}"
-                                                data-date="{{ payment.date }}"
-                                                data-expense-id="{{ payment.expense_id }}">
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-primary edit-payment"
+                                            data-payment-index="{{ loop.index0 }}"
+                                            data-participant-id="{{ payment.id }}"
+                                            data-amount="{{ payment.amount }}"
+                                            data-description="{{ payment.description }}"
+                                            data-date="{{ payment.date }}"
+                                            data-expense-id="{{ payment.expense_id }}"
+                                        >
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger delete-payment" 
-                                                data-payment-index="{{ loop.index0 }}">
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-danger delete-payment"
+                                            data-payment-index="{{ loop.index0 }}"
+                                        >
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -104,64 +214,113 @@
 
     <!-- Add Payment Form -->
     <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Add General Payment</h5>
+        <div class="panel h-100">
+            <div class="panel-header">
+                <h5 class="mb-0">Add General Payment</h5>
             </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('trips.manage_payments', trip_id=trip.id) }}">
-                    <input type="hidden" name="action" value="add">
+            <div class="panel-body">
+                <form
+                    method="POST"
+                    action="{{ url_for('trips.manage_payments', trip_id=trip.id) }}"
+                >
+                    <input type="hidden" name="action" value="add" />
                     <div class="mb-3">
-                        <label for="participant_id" class="form-label">Participant</label>
-                        <select class="form-select" id="participant_id" name="participant_id" required>
-                            <option value="" disabled selected>Select a participant</option>
-                            
+                        <label for="participant_id" class="form-label"
+                            >Participant</label
+                        >
+                        <select
+                            class="form-select"
+                            id="participant_id"
+                            name="participant_id"
+                            required
+                        >
+                            <option value="" disabled selected>
+                                Select a participant
+                            </option>
+
                             <!-- Registered participants -->
                             <optgroup label="Registered Users">
                                 {% for participant in registered_participants %}
-                                <option value="{{ participant.id }}">{{ participant.name }}{% if participant.id == current_user.id %} (You){% endif %}</option>
+                                <option value="{{ participant.id }}">
+                                    {{ participant.name }}{% if participant.id
+                                    == current_user.id %} (You){% endif %}
+                                </option>
                                 {% endfor %}
                             </optgroup>
-                            
+
                             <!-- Unregistered participants -->
                             {% if unregistered_participants %}
                             <optgroup label="Unregistered Participants">
                                 {% for name in unregistered_participants %}
-                                <option value="unregistered_{{ name }}">{{ name }}</option>
+                                <option value="unregistered_{{ name }}">
+                                    {{ name }}
+                                </option>
                                 {% endfor %}
                             </optgroup>
                             {% endif %}
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <input type="text" class="form-control" id="description" name="description" placeholder="e.g., Hotel payment, Taxi fare" required>
+                        <label for="description" class="form-label"
+                            >Description</label
+                        >
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="description"
+                            name="description"
+                            placeholder="e.g., Hotel payment, Taxi fare"
+                            required
+                        />
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="expense_id" class="form-label">Linked Expense</label>
-                        <select class="form-select" id="expense_id" name="expense_id">
+                        <label for="expense_id" class="form-label"
+                            >Linked Expense</label
+                        >
+                        <select
+                            class="form-select"
+                            id="expense_id"
+                            name="expense_id"
+                        >
                             <option value="">Select expense</option>
                             {% for expense in expenses %}
-                            <option value="{{ expense.id }}">{{ expense.description }} (₹{{ expense.amount }})</option>
+                            <option value="{{ expense.id }}">
+                                {{ expense.description }} (₹{{ expense.amount
+                                }})
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="amount" class="form-label">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">₹</span>
-                            <input type="number" class="form-control" id="amount" name="amount" min="0.01" step="0.01" required>
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="amount"
+                                name="amount"
+                                min="0.01"
+                                step="0.01"
+                                required
+                            />
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="date" name="date" required>
+                        <input
+                            type="date"
+                            class="form-control"
+                            id="date"
+                            name="date"
+                            required
+                        />
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>Add Payment
                     </button>
@@ -174,11 +333,11 @@
 <!-- Expense Summary Section -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h5 class="card-title mb-0">Expense Summary by Category</h5>
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="mb-0">Expense Summary by Category</h5>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 {% if expense_summary %}
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -195,12 +354,22 @@
                             {% for category in expense_summary %}
                             <tr>
                                 <td>
-                                    <span class="fw-bold">{{ category.category }}</span>
+                                    <span class="fw-bold"
+                                        >{{ category.category }}</span
+                                    >
                                 </td>
                                 <td>{{ category.count }}</td>
-                                <td class="text-end">₹{{ category.total|round(2) }}</td>
-                                <td class="text-end">₹{{ (category.total / category.count)|round(2) }}</td>
-                                <td class="text-end">{{ ((category.total / total_expense_amount) * 100)|round(1) }}%</td>
+                                <td class="text-end">
+                                    ₹{{ category.total|round(2) }}
+                                </td>
+                                <td class="text-end">
+                                    ₹{{ (category.total /
+                                    category.count)|round(2) }}
+                                </td>
+                                <td class="text-end">
+                                    {{ ((category.total / total_expense_amount)
+                                    * 100)|round(1) }}%
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -208,8 +377,13 @@
                             <tr>
                                 <th>Total</th>
                                 <th>{{ total_expense_count }}</th>
-                                <th class="text-end">₹{{ total_expense_amount|round(2) }}</th>
-                                <th class="text-end">₹{{ (total_expense_amount / total_expense_count)|round(2) }}</th>
+                                <th class="text-end">
+                                    ₹{{ total_expense_amount|round(2) }}
+                                </th>
+                                <th class="text-end">
+                                    ₹{{ (total_expense_amount /
+                                    total_expense_count)|round(2) }}
+                                </th>
                                 <th class="text-end">100%</th>
                             </tr>
                         </tfoot>
@@ -226,11 +400,11 @@
 <!-- General Payment Summary Section -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-success text-white">
-                <h5 class="card-title mb-0">General Payment Summary by Category</h5>
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="mb-0">General Payment Summary by Category</h5>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 {% if payment_summary %}
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -247,12 +421,22 @@
                             {% for category in payment_summary %}
                             <tr>
                                 <td>
-                                    <span class="fw-bold">{{ category.category }}</span>
+                                    <span class="fw-bold"
+                                        >{{ category.category }}</span
+                                    >
                                 </td>
                                 <td>{{ category.count }}</td>
-                                <td class="text-end">₹{{ category.total|round(2) }}</td>
-                                <td class="text-end">₹{{ (category.total / category.count)|round(2) }}</td>
-                                <td class="text-end">{{ ((category.total / total_payment_amount) * 100)|round(1) }}%</td>
+                                <td class="text-end">
+                                    ₹{{ category.total|round(2) }}
+                                </td>
+                                <td class="text-end">
+                                    ₹{{ (category.total /
+                                    category.count)|round(2) }}
+                                </td>
+                                <td class="text-end">
+                                    {{ ((category.total / total_payment_amount)
+                                    * 100)|round(1) }}%
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -260,8 +444,15 @@
                             <tr>
                                 <th>Total</th>
                                 <th>{{ total_payment_count }}</th>
-                                <th class="text-end">₹{{ total_payment_amount|round(2) }}</th>
-                                <th class="text-end">{% if total_payment_count > 0 %}₹{{ (total_payment_amount / total_payment_count)|round(2) }}{% else %}₹0.00{% endif %}</th>
+                                <th class="text-end">
+                                    ₹{{ total_payment_amount|round(2) }}
+                                </th>
+                                <th class="text-end">
+                                    {% if total_payment_count > 0 %}₹{{
+                                    (total_payment_amount /
+                                    total_payment_count)|round(2) }}{% else
+                                    %}₹0.00{% endif %}
+                                </th>
                                 <th class="text-end">100%</th>
                             </tr>
                         </tfoot>
@@ -277,106 +468,118 @@
 
 <div class="alert alert-info">
     <i class="fas fa-info-circle me-2"></i>
-    <strong>About General Payments:</strong> These are payments made by participants during the trip that aren't tied to specific expenses. For example, a participant might have paid for the hotel directly, or covered transportation costs. These payments are included in the balance calculations to ensure everyone pays their fair share.
+    <strong>About General Payments:</strong> These are payments made by
+    participants during the trip that aren't tied to specific expenses. For
+    example, a participant might have paid for the hotel directly, or covered
+    transportation costs. These payments are included in the balance
+    calculations to ensure everyone pays their fair share.
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Set default date to today
-    const today = new Date();
-    document.getElementById('date').value = today.toISOString().split('T')[0];
+    document.addEventListener("DOMContentLoaded", function () {
+        // Set default date to today
+        const today = new Date();
+        document.getElementById("date").value = today
+            .toISOString()
+            .split("T")[0];
 
-    // Edit payment functionality
-    document.querySelectorAll('.edit-payment').forEach(button => {
-        button.addEventListener('click', function() {
-            const index = this.dataset.paymentIndex;
-            const participantId = this.dataset.participantId;
-            const amount = this.dataset.amount;
-            const description = this.dataset.description;
-            const date = this.dataset.date;
-            const expenseId = this.dataset.expenseId;
+        // Edit payment functionality
+        document.querySelectorAll(".edit-payment").forEach((button) => {
+            button.addEventListener("click", function () {
+                const index = this.dataset.paymentIndex;
+                const participantId = this.dataset.participantId;
+                const amount = this.dataset.amount;
+                const description = this.dataset.description;
+                const date = this.dataset.date;
+                const expenseId = this.dataset.expenseId;
 
-            // Fill the form with existing data
-            document.getElementById('participant_id').value = participantId;
-            document.getElementById('amount').value = amount;
-            document.getElementById('description').value = description;
-            document.getElementById('date').value = date;
-            document.getElementById('expense_id').value = expenseId;
+                // Fill the form with existing data
+                document.getElementById("participant_id").value = participantId;
+                document.getElementById("amount").value = amount;
+                document.getElementById("description").value = description;
+                document.getElementById("date").value = date;
+                document.getElementById("expense_id").value = expenseId;
 
-            // Add hidden inputs for edit action
-            const form = document.querySelector('form');
-            
-            // Remove any existing hidden inputs
-            const existingInputs = form.querySelectorAll('input[type="hidden"][name="action"], input[type="hidden"][name="payment_index"]');
-            existingInputs.forEach(input => input.remove());
-            
-            // Add new hidden inputs
-            const actionInput = document.createElement('input');
-            actionInput.type = 'hidden';
-            actionInput.name = 'action';
-            actionInput.value = 'edit';
-            form.appendChild(actionInput);
+                // Add hidden inputs for edit action
+                const form = document.querySelector("form");
 
-            const indexInput = document.createElement('input');
-            indexInput.type = 'hidden';
-            indexInput.name = 'payment_index';
-            indexInput.value = index;
-            form.appendChild(indexInput);
+                // Remove any existing hidden inputs
+                const existingInputs = form.querySelectorAll(
+                    'input[type="hidden"][name="action"], input[type="hidden"][name="payment_index"]',
+                );
+                existingInputs.forEach((input) => input.remove());
 
-            // Change submit button text
-            const submitButton = form.querySelector('button[type="submit"]');
-            submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Update Payment';
-        });
-    });
-
-    // Delete payment functionality
-    document.querySelectorAll('.delete-payment').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const paymentIndex = this.dataset.paymentIndex;
-            
-            if (confirm('Are you sure you want to delete this payment?')) {
-                // Create a form for the delete request
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = "{{ url_for('trips.manage_payments', trip_id=trip.id) }}";
-                
-                // Add CSRF token if available (handles both Flask-WTF and other CSRF implementations)
-                const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') || 
-                                        document.querySelector('input[name="csrf_token"]');
-                
-                if (csrfTokenElement) {
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = 'csrf_token';
-                    csrfInput.value = csrfTokenElement.content || csrfTokenElement.value;
-                    form.appendChild(csrfInput);
-                }
-                
-                // Add hidden inputs
-                const actionInput = document.createElement('input');
-                actionInput.type = 'hidden';
-                actionInput.name = 'action';
-                actionInput.value = 'delete';
+                // Add new hidden inputs
+                const actionInput = document.createElement("input");
+                actionInput.type = "hidden";
+                actionInput.name = "action";
+                actionInput.value = "edit";
                 form.appendChild(actionInput);
-                
-                const indexInput = document.createElement('input');
-                indexInput.type = 'hidden';
-                indexInput.name = 'payment_index';
-                indexInput.value = paymentIndex;
+
+                const indexInput = document.createElement("input");
+                indexInput.type = "hidden";
+                indexInput.name = "payment_index";
+                indexInput.value = index;
                 form.appendChild(indexInput);
-                
-                // For debugging, log the form data
-                console.log("Deleting payment index:", paymentIndex);
-                
-                // Append form to body and submit
-                document.body.appendChild(form);
-                form.submit();
-            }
+
+                // Change submit button text
+                const submitButton = form.querySelector(
+                    'button[type="submit"]',
+                );
+                submitButton.innerHTML =
+                    '<i class="fas fa-save me-2"></i>Update Payment';
+            });
+        });
+
+        // Delete payment functionality
+        document.querySelectorAll(".delete-payment").forEach((button) => {
+            button.addEventListener("click", function (e) {
+                e.preventDefault();
+                const paymentIndex = this.dataset.paymentIndex;
+
+                if (confirm("Are you sure you want to delete this payment?")) {
+                    // Create a form for the delete request
+                    const form = document.createElement("form");
+                    form.method = "POST";
+                    form.action =
+                        "{{ url_for('trips.manage_payments', trip_id=trip.id) }}";
+
+                    // Add CSRF token if available (handles both Flask-WTF and other CSRF implementations)
+                    const csrfTokenElement =
+                        document.querySelector('meta[name="csrf-token"]') ||
+                        document.querySelector('input[name="csrf_token"]');
+
+                    if (csrfTokenElement) {
+                        const csrfInput = document.createElement("input");
+                        csrfInput.type = "hidden";
+                        csrfInput.name = "csrf_token";
+                        csrfInput.value =
+                            csrfTokenElement.content || csrfTokenElement.value;
+                        form.appendChild(csrfInput);
+                    }
+
+                    // Add hidden inputs
+                    const actionInput = document.createElement("input");
+                    actionInput.type = "hidden";
+                    actionInput.name = "action";
+                    actionInput.value = "delete";
+                    form.appendChild(actionInput);
+
+                    const indexInput = document.createElement("input");
+                    indexInput.type = "hidden";
+                    indexInput.name = "payment_index";
+                    indexInput.value = paymentIndex;
+                    form.appendChild(indexInput);
+
+                    // For debugging, log the form data
+                    console.log("Deleting payment index:", paymentIndex);
+
+                    // Append form to body and submit
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
         });
     });
-});
 </script>
 {% endblock %}
