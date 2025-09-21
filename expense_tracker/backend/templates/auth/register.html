@@ -1,31 +1,150 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Register - Trip Expense Tracker{%
+endblock %} {% block styles %}
+<style>
+    :root {
+        --body-bg: #f4f1ea;
+        --panel-bg: #ffffff;
+        --border-color: #000000;
+        --theme-accent-color: #aec6cf; /* Default: Pastel Blue */
+        --theme-contrast-color: #000000; /* Default for light accent */
+        --secondary-action-color: #85a0aa; /* Default: Darkened Pastel Blue */
+        --border-width: 2px;
+        --shadow-offset: 5px;
+    }
 
-{% block title %}Register - Trip Expense Tracker{% endblock %}
+    body {
+        background-color: var(--body-bg);
+        font-family:
+            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+            Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+            "Segoe UI Symbol";
+    }
 
-{% block content %}
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .fw-bold {
+        font-weight: 700 !important;
+        color: var(--border-color);
+    }
+
+    .btn {
+        border: var(--border-width) solid var(--border-color);
+        box-shadow: 3px 3px 0px var(--border-color);
+        border-radius: 0.5rem;
+        font-weight: 700;
+        transition: all 0.15s ease-out;
+        padding: 0.5rem 1rem;
+    }
+
+    .btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0px var(--border-color);
+    }
+
+    .btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0px var(--border-color);
+    }
+
+    .btn-primary {
+        background-color: var(--theme-accent-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-primary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-action-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel {
+        background-color: var(--panel-bg);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: 1rem;
+        box-shadow: var(--shadow-offset) var(--shadow-offset) 0px
+            var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* Ensures children conform to rounded corners */
+    }
+
+    .panel-header {
+        padding: 0.75rem 1.25rem;
+        border-bottom: var(--border-width) solid var(--border-color);
+        background-color: var(--theme-accent-color);
+    }
+    .panel-header h5 {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel-body {
+        padding: 1rem;
+        flex-grow: 1;
+    }
+</style>
+{% endblock %} {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h4 class="card-title mb-0">Register</h4>
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="fw-bold mb-0">Register</h5>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 <form method="POST" action="{{ url_for('auth.register') }}">
                     <div class="mb-3">
                         <label for="name" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="name"
+                            name="name"
+                            required
+                        />
                     </div>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
+                        <input
+                            type="email"
+                            class="form-control"
+                            id="email"
+                            name="email"
+                            required
+                        />
                     </div>
                     <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                        <label for="password" class="form-label"
+                            >Password</label
+                        >
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="password"
+                            name="password"
+                            required
+                        />
                     </div>
                     <div class="mb-3">
-                        <label for="confirm_password" class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        <label for="confirm_password" class="form-label"
+                            >Confirm Password</label
+                        >
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="confirm_password"
+                            name="confirm_password"
+                            required
+                        />
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary">
@@ -33,27 +152,28 @@
                         </button>
                     </div>
                 </form>
-            </div>
-            <div class="card-footer text-center">
-                <p class="mb-0">Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+                <div class="text-center mt-3">
+                    <p class="mb-0">
+                        Already have an account?
+                        <a href="{{ url_for('auth.login') }}">Login</a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
     // Client-side validation for password matching
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.querySelector('form');
-        const password = document.getElementById('password');
-        const confirmPassword = document.getElementById('confirm_password');
-        
-        form.addEventListener('submit', function(event) {
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("form");
+        const password = document.getElementById("password");
+        const confirmPassword = document.getElementById("confirm_password");
+
+        form.addEventListener("submit", function (event) {
             if (password.value !== confirmPassword.value) {
                 event.preventDefault();
-                alert('Passwords do not match!');
+                alert("Passwords do not match!");
                 confirmPassword.focus();
             }
         });

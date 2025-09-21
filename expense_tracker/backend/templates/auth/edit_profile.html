@@ -1,33 +1,145 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Edit Profile{% endblock %} {% block
+styles %}
+<style>
+    :root {
+        --body-bg: #f4f1ea;
+        --panel-bg: #ffffff;
+        --border-color: #000000;
+        --theme-accent-color: #aec6cf; /* Default: Pastel Blue */
+        --theme-contrast-color: #000000; /* Default for light accent */
+        --secondary-action-color: #85a0aa; /* Default: Darkened Pastel Blue */
+        --border-width: 2px;
+        --shadow-offset: 5px;
+    }
 
-{% block title %}Edit Profile{% endblock %}
+    body {
+        background-color: var(--body-bg);
+        font-family:
+            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+            Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+            "Segoe UI Symbol";
+    }
 
-{% block content %}
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .fw-bold {
+        font-weight: 700 !important;
+        color: var(--border-color);
+    }
+
+    .btn {
+        border: var(--border-width) solid var(--border-color);
+        box-shadow: 3px 3px 0px var(--border-color);
+        border-radius: 0.5rem;
+        font-weight: 700;
+        transition: all 0.15s ease-out;
+        padding: 0.5rem 1rem;
+    }
+
+    .btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0px var(--border-color);
+    }
+
+    .btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0px var(--border-color);
+    }
+
+    .btn-primary {
+        background-color: var(--theme-accent-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-primary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-action-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel {
+        background-color: var(--panel-bg);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: 1rem;
+        box-shadow: var(--shadow-offset) var(--shadow-offset) 0px
+            var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* Ensures children conform to rounded corners */
+    }
+
+    .panel-header {
+        padding: 0.75rem 1.25rem;
+        border-bottom: var(--border-width) solid var(--border-color);
+        background-color: var(--theme-accent-color);
+    }
+    .panel-header h5 {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel-body {
+        padding: 1rem;
+        flex-grow: 1;
+    }
+</style>
+{% endblock %} {% block content %}
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Edit Profile</h4>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="panel">
+                <div class="panel-header">
+                    <h5 class="fw-bold mb-0">Edit Profile</h5>
                 </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+                <div class="panel-body">
+                    <form
+                        method="POST"
+                        action="{{ url_for('auth.edit_profile') }}"
+                    >
                         <div class="mb-3">
                             <label for="name" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="name" name="name" value="{{ current_user.name }}" required>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="name"
+                                name="name"
+                                value="{{ current_user.name }}"
+                                required
+                            />
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" value="{{ current_user.email }}" disabled>
-                            <div class="form-text text-muted">Email cannot be changed.</div>
+                            <input
+                                type="email"
+                                class="form-control"
+                                id="email"
+                                value="{{ current_user.email }}"
+                                disabled
+                            />
+                            <div class="form-text text-muted">
+                                Email cannot be changed.
+                            </div>
                         </div>
-                        
+
                         <div class="d-flex">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Save Changes
                             </button>
-                            <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary ms-2">
+                            <a
+                                href="{{ url_for('auth.profile') }}"
+                                class="btn btn-secondary ms-2"
+                            >
                                 <i class="fas fa-times me-2"></i>Cancel
                             </a>
                         </div>
@@ -37,4 +149,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

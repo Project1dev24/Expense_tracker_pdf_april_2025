@@ -1,43 +1,146 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}User Profile{% endblock %} {% block
+styles %}
+<style>
+    :root {
+        --body-bg: #f4f1ea;
+        --panel-bg: #ffffff;
+        --border-color: #000000;
+        --theme-accent-color: #aec6cf; /* Default: Pastel Blue */
+        --theme-contrast-color: #000000; /* Default for light accent */
+        --secondary-action-color: #85a0aa; /* Default: Darkened Pastel Blue */
+        --border-width: 2px;
+        --shadow-offset: 5px;
+    }
 
-{% block title %}User Profile{% endblock %}
+    body {
+        background-color: var(--body-bg);
+        font-family:
+            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+            Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+            "Segoe UI Symbol";
+    }
 
-{% block content %}
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .fw-bold {
+        font-weight: 700 !important;
+        color: var(--border-color);
+    }
+
+    .btn {
+        border: var(--border-width) solid var(--border-color);
+        box-shadow: 3px 3px 0px var(--border-color);
+        border-radius: 0.5rem;
+        font-weight: 700;
+        transition: all 0.15s ease-out;
+        padding: 0.5rem 1rem;
+    }
+
+    .btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0px var(--border-color);
+    }
+
+    .btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0px var(--border-color);
+    }
+
+    .btn-primary {
+        background-color: var(--theme-accent-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-primary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-action-color);
+        color: var(--theme-contrast-color);
+        border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel {
+        background-color: var(--panel-bg);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: 1rem;
+        box-shadow: var(--shadow-offset) var(--shadow-offset) 0px
+            var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* Ensures children conform to rounded corners */
+    }
+
+    .panel-header {
+        padding: 0.75rem 1.25rem;
+        border-bottom: var(--border-width) solid var(--border-color);
+        background-color: var(--theme-accent-color);
+    }
+    .panel-header h5 {
+        color: var(--theme-contrast-color);
+    }
+
+    .panel-body {
+        padding: 1rem;
+        flex-grow: 1;
+    }
+</style>
+{% endblock %} {% block content %}
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">User Profile</h4>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="panel">
+                <div class="panel-header">
+                    <h5 class="fw-bold mb-0">User Profile</h5>
                 </div>
-                <div class="card-body">
+                <div class="panel-body">
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <h5>Personal Information</h5>
-                            <hr>
+                            <hr />
                             <dl class="row">
                                 <dt class="col-sm-3">Name:</dt>
                                 <dd class="col-sm-9">{{ user.name }}</dd>
-                                
+
                                 <dt class="col-sm-3">Email:</dt>
                                 <dd class="col-sm-9">{{ user.email }}</dd>
-                                
+
                                 <dt class="col-sm-3">Joined:</dt>
-                                <dd class="col-sm-9">{{ user.created_at.strftime('%d %B %Y') }}</dd>
-                                
+                                <dd class="col-sm-9">
+                                    {{ user.created_at.strftime('%d %B %Y') }}
+                                </dd>
+
                                 <dt class="col-sm-3">Last Login:</dt>
-                                <dd class="col-sm-9">{{ user.last_seen.strftime('%d %B %Y %H:%M') if user.last_seen else 'Not available' }}</dd>
+                                <dd class="col-sm-9">
+                                    {{ user.last_seen.strftime('%d %B %Y %H:%M')
+                                    if user.last_seen else 'Not available' }}
+                                </dd>
                             </dl>
                         </div>
                     </div>
-                    
+
                     <div class="row mt-4">
-                        <div class="col-md-12">
-                            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-primary">
-                                <i class="fas fa-user-edit me-2"></i>Edit Profile
+                        <div class="col-md-12 text-center">
+                            <a
+                                href="{{ url_for('auth.edit_profile') }}"
+                                class="btn btn-primary"
+                            >
+                                <i class="fas fa-user-edit me-2"></i>Edit
+                                Profile
                             </a>
-                            <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary ms-2">
-                                <i class="fas fa-key me-2"></i>Change Password
+                            <a
+                                href="{{ url_for('auth.settings') }}"
+                                class="btn btn-secondary ms-2"
+                            >
+                                <i class="fas fa-cog me-2"></i>Settings
                             </a>
                         </div>
                     </div>
@@ -46,4 +149,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
