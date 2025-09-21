@@ -105,6 +105,10 @@ body {
     font-size: 1.1rem;
 }
 
+a.btn:hover {
+    color: var(--theme-contrast-color);
+}
+
 /* Form Styles */
 .form-control {
     border-radius: 5px;
@@ -142,6 +146,31 @@ body {
 .table-responsive {
     margin: 0;
     padding: 0;
+}
+
+/* Added comprehensive styles for btn-outline-primary in tables */
+.table .btn-outline-primary {
+    color: var(--theme-accent-color);
+    border-color: var(--theme-accent-color);
+    background-color: transparent;
+}
+
+.table .btn-outline-primary:hover,
+.table .btn-outline-primary:focus,
+.table .btn-outline-primary:active,
+.table .btn-outline-primary.active,
+.table a.btn-outline-primary:hover,
+.table a.btn-outline-primary:focus,
+.table a.btn-outline-primary:active,
+.table a.btn-outline-primary.active {
+    color: var(--theme-contrast-color) !important;
+    background-color: var(--theme-accent-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.table .btn-check:focus + .btn-outline-primary,
+.table .btn-outline-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(174, 198, 207, 0.25);
 }
 
 @media (max-width: 768px) {
@@ -887,4 +916,83 @@ body.modal-open {
 
 .list-group-flush::-webkit-scrollbar-thumb:hover {
     background: #a1a1a1;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb {
+    background-color: #e9ecef;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+}
+
+.breadcrumb-item a {
+    color: var(--dark-color);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary-color);
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+}
+
+/* View Trip Page Styles */
+.trip-view-buttons .btn {
+    color: var(--theme-contrast-color);
+}
+
+.trip-view-buttons .btn-primary {
+    background-color: var(--theme-accent-color);
+    border-color: var(--border-color);
+}
+
+.trip-view-buttons .btn-primary:hover {
+    background-color: var(--secondary-action-color);
+}
+
+/* Added comprehensive styles for btn-outline-primary to maintain theme colors */
+.trip-view-buttons .btn-outline-primary {
+    color: var(--theme-accent-color);
+    border-color: var(--theme-accent-color);
+    background-color: transparent;
+}
+
+.trip-view-buttons .btn-outline-primary:hover,
+.trip-view-buttons .btn-outline-primary:focus,
+.trip-view-buttons .btn-outline-primary:active,
+.trip-view-buttons .btn-outline-primary.active,
+.trip-view-buttons a.btn-outline-primary:hover,
+.trip-view-buttons a.btn-outline-primary:focus,
+.trip-view-buttons a.btn-outline-primary:active,
+.trip-view-buttons a.btn-outline-primary.active {
+    color: var(--theme-contrast-color) !important;
+    background-color: var(--theme-accent-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.trip-view-buttons .btn-check:focus + .btn-outline-primary,
+.trip-view-buttons .btn-outline-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(174, 198, 207, 0.25);
+}
+
+.nav-tabs .nav-link {
+    color: var(--dark-color);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--theme-contrast-color);
+    border-color: var(--theme-accent-color);
+    font-weight: 700;
+}
+
+.text-primary {
+    color: var(--theme-accent-color) !important;
 }

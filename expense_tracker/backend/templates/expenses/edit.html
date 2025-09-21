@@ -51,12 +51,44 @@ endblock %} {% block styles %}
     }
 
     .btn-primary {
-        background-color: var(--theme-accent-color);
-        color: var(--theme-contrast-color);
-        border-color: var(--border-color);
+        background-color: var(--theme-accent-color) !important;
+        color: var(--theme-contrast-color) !important;
+        border-color: var(--border-color) !important;
     }
-    .btn-primary:hover {
-        color: var(--theme-contrast-color);
+    .btn-primary:hover,
+    .btn-primary:focus,
+    .btn-primary:active,
+    a.btn-primary:hover,
+    a.btn-primary:focus,
+    a.btn-primary:active {
+        color: var(--theme-contrast-color) !important;
+        background-color: var(--theme-accent-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    .btn-check:focus + .btn-primary,
+    .btn-primary:focus {
+        box-shadow: 0 0 0 0.25rem rgba(174, 198, 207, 0.25) !important;
+    }
+
+    /* Added styles for outline buttons to maintain theme colors */
+    .btn-outline-primary {
+        color: var(--theme-accent-color) !important;
+        border-color: var(--theme-accent-color) !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-primary:hover,
+    .btn-outline-primary:focus,
+    .btn-outline-primary:active,
+    a.btn-outline-primary:hover,
+    a.btn-outline-primary:focus,
+    a.btn-outline-primary:active {
+        color: var(--theme-contrast-color) !important;
+        background-color: var(--theme-accent-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    .btn-check:focus + .btn-outline-primary,
+    .btn-outline-primary:focus {
+        box-shadow: 0 0 0 0.25rem rgba(174, 198, 207, 0.25) !important;
     }
 
     .btn-secondary {

@@ -184,7 +184,7 @@ Expense Tracker{% endblock %} {% block styles %}
                             <div class="btn-group btn-group-sm">
                                 <a
                                     href="{{ url_for('expenses.view_expense', trip_id=trip.id, expense_id=expense.id) }}"
-                                    class="btn btn-outline-primary"
+                                    class="btn btn-primary"
                                 >
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -192,13 +192,13 @@ Expense Tracker{% endblock %} {% block styles %}
                                 trip.admin_id == current_user.id %}
                                 <a
                                     href="{{ url_for('expenses.edit_expense', trip_id=trip.id, expense_id=expense.id) }}"
-                                    class="btn btn-outline-primary"
+                                    class="btn btn-primary"
                                 >
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button
                                     type="button"
-                                    class="btn btn-outline-danger"
+                                    class="btn btn-danger"
                                     onclick="showDeleteModal({{ expense.id }}, '{{ expense.description|e }}', {{ expense.amount }}, {{ trip.id }})"
                                     title="Delete Expense"
                                 >
