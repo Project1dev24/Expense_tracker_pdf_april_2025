@@ -226,7 +226,7 @@ endblock %} {% block content %}
 
 <!-- Charts Row -->
 <div class="row">
-    <div class="col-lg-6 mb-4">
+    <div class="col-lg-5 mb-4">
         <div class="panel">
             <div class="panel-header">
                 <h5 class="fw-bold mb-0">Spending by Category</h5>
@@ -241,9 +241,7 @@ endblock %} {% block content %}
                 <select id="category-month-filter" class="form-select">
                     <option value="all">All Time</option>
                     {% for month in months_for_filter %}
-                    <option value="{{ month.value }}">
-                        {{ month.text }}
-                    </option>
+                    <option value="{{ month.value }}">{{ month.text }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -252,7 +250,7 @@ endblock %} {% block content %}
             </div>
         </div>
     </div>
-    <div class="col-lg-6 mb-4">
+    <div class="col-lg-7 mb-4">
         <div class="panel">
             <div class="panel-header">
                 <h5 class="fw-bold mb-0">Spending History</h5>
@@ -582,14 +580,8 @@ endblock %} {% block content %}
       };
 
       const updateCharts = async () => {
-          const categoryTripId = document.getElementById('category-trip-filter').value;
-          const categoryMonth = document.getElementById('category-month-filter').value;
-          const spendingTripId = document.getElementById('spending-trip-filter').value;
-
-          // For simplicity, we'll use the category filters for both charts for now.
-          // A more advanced implementation could have separate filters.
-          const tripId = categoryTripId;
-          const month = categoryMonth;
+          const tripId = document.getElementById('category-trip-filter').value;
+          const month = document.getElementById('category-month-filter').value;
 
           let url = `/api/dashboard_data?`;
           if (tripId !== 'all') url += `trip_id=${tripId}&`;
@@ -604,10 +596,34 @@ endblock %} {% block content %}
           }
       };
 
+      const updateMonthFilter = async () => {
+        const tripId = document.getElementById('category-trip-filter').value;
+        const monthFilter = document.getElementById('category-month-filter');
+
+        let url = tripId === 'all' ? '/api/all_months' : `/api/months_for_trip/${tripId}`;
+
+        try {
+            const response = await fetch(url);
+            const months = await response.json();
+
+            monthFilter.innerHTML = '<option value="all">All Time</option>';
+            months.forEach(month => {
+                const option = new Option(month.text, month.value);
+                monthFilter.add(option);
+            });
+
+            // After updating the months, refresh the charts
+            updateCharts();
+        } catch (error) {
+            console.error('Error fetching months:', error);
+        }
+      };
+
       // Add event listeners
-      document.getElementById('category-trip-filter').addEventListener('change', updateCharts);
+      document.getElementById('category-trip-filter').addEventListener('change', updateMonthFilter);
       document.getElementById('category-month-filter').addEventListener('change', updateCharts);
       document.getElementById('spending-trip-filter').addEventListener('change', updateCharts);
+
 
       // Initial chart load
       initCharts({

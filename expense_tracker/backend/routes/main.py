@@ -20,6 +20,7 @@ def index():
 def dashboard():
     # Get all trips for the user
     trips = current_user.get_trips()
+    trip_ids = [trip.id for trip in trips]
 
     # Get recent trips (for display in the trips section) - sorted by start date (most recent first)
     recent_trips = sorted(trips, key=lambda t: t.start_date, reverse=True)[:5]
@@ -40,15 +41,17 @@ def dashboard():
     # Get total balance across all trips
     total_balance = current_user.get_total_balance()
 
-    # Calculate total amount spent (sum of all expenses paid by the user)
+    # Calculate total amount of user's share of expenses
     total_spent = 0
-    for trip in trips:
-        expenses = Expense.query.filter_by(trip_id=trip.id, payer_id=current_user.id).all()
-        for expense in expenses:
-            total_spent += expense.amount
+    if trip_ids:
+        all_user_expenses = Expense.query.filter(Expense.trip_id.in_(trip_ids)).all()
+        for expense in all_user_expenses:
+            shares = expense.get_shares()
+            user_share = shares.get(str(current_user.id))
+            if user_share:
+                total_spent += user_share
 
     # Get the 10 most recent expenses paid by the user across all their trips
-    trip_ids = [trip.id for trip in trips]
     paid_expenses_query = []
     if trip_ids:
         paid_expenses_query = Expense.query.filter(
@@ -70,56 +73,131 @@ def dashboard():
             })
 
 
-    # Prepare month filter data
+    # Prepare month filter data from actual expenses
     months_for_filter = []
-    current_date = today
-    for _ in range(12):
-        months_for_filter.append({
-            'value': current_date.strftime('%Y-%m'),
-            'text': current_date.strftime('%B %Y')
-        })
-        current_date = (current_date.replace(day=1) - timedelta(days=1))
+    if trip_ids:
+        distinct_months = db.session.query(
+            func.strftime('%Y-%m', Expense.date)
+        ).filter(Expense.trip_id.in_(trip_ids)).distinct().order_by(func.strftime('%Y-%m', Expense.date).desc()).all()
+
+        for (month_str,) in distinct_months:
+            year, month = map(int, month_str.split('-'))
+            month_name = datetime(year, month, 1).strftime('%B %Y')
+            months_for_filter.append({
+                'value': month_str,
+                'text': month_name
+            })
 
     # --- Chart Data Preparation ---
+    category_labels = []
+    category_values = []
+    line_chart_labels = []
+    line_chart_values = []
 
-    # 1. Spending by Category (Pie Chart)
-    category_spending = db.session.query(
-        Expense.category, func.sum(Expense.amount)
-    ).filter(
-        Expense.trip_id.in_(trip_ids)
-    ).group_by(Expense.category).order_by(func.sum(Expense.amount).desc()).all() if trip_ids else []
+    if trip_ids:
+        base_query = Expense.query.filter(Expense.trip_id.in_(trip_ids))
 
-    category_labels = [item[0] or 'Uncategorized' for item in category_spending]
-    category_values = [float(item[1]) for item in category_spending]
+        # 1. Spending by Category (Pie Chart) - based on user's share
+        expenses = base_query.all()
+        category_spending = {}
+        for expense in expenses:
+            shares = expense.get_shares()
+            user_share = shares.get(str(current_user.id))
 
-    # 2. Spending Over Time (Line Chart for last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    daily_spending = db.session.query(
-        func.date(Expense.date),
-        func.sum(Expense.amount)
-    ).filter(
-        Expense.trip_id.in_(trip_ids),
-        Expense.date >= thirty_days_ago
-    ).group_by(func.date(Expense.date)).order_by(func.date(Expense.date)).all() if trip_ids else []
+            if user_share:
+                category = expense.category or 'Uncategorized'
+                if category not in category_spending:
+                    category_spending[category] = 0
+                category_spending[category] += user_share
 
-    spending_data_map = {item[0]: float(item[1]) for item in daily_spending}
-    line_chart_labels = [(datetime.utcnow().date() - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(29, -1, -1)]
-    line_chart_values = [spending_data_map.get(day, 0) for day in line_chart_labels]
+        # Sort categories by spending
+        sorted_categories = sorted(category_spending.items(), key=lambda item: item[1], reverse=True)
+
+        category_labels = [item[0] for item in sorted_categories]
+        category_values = [float(item[1]) for item in sorted_categories]
+
+        # 2. Spending Over Time (Line Chart for last 12 months) - based on user's share
+        spending_data_map = {}
+        date_format_str = '%Y-%m'
+        twelve_months_ago = (datetime.utcnow().replace(day=1) - timedelta(days=365)).replace(day=1)
+
+        for expense in expenses:
+            if expense.date >= twelve_months_ago:
+                shares = expense.get_shares()
+                user_share = shares.get(str(current_user.id))
+                if user_share:
+                    month_key = expense.date.strftime(date_format_str)
+                    if month_key not in spending_data_map:
+                        spending_data_map[month_key] = 0
+                    spending_data_map[month_key] += user_share
+
+        line_chart_labels = [((datetime.utcnow() - timedelta(days=30*i)).strftime(date_format_str)) for i in range(11, -1, -1)]
+        line_chart_values = [spending_data_map.get(month_label, 0) for month_label in line_chart_labels]
 
 
     return render_template('main/dashboard.html',
-                           recent_trips=recent_trips,
-                           recent_expenses=user_paid_expenses,
-                           total_balance=total_balance,
-                           total_trips=total_trips,
-                           total_spent=total_spent,
-                           today=today,
-                           older_trips=older_trips,
-                           months_for_filter=months_for_filter,
-                           category_labels=category_labels,
-                           category_values=category_values,
-                           line_chart_labels=line_chart_labels,
-                           line_chart_values=line_chart_values)
+                            trips=trips,
+                            recent_trips=recent_trips,
+                            recent_expenses=user_paid_expenses,
+                            total_balance=total_balance,
+                            total_trips=total_trips,
+                            total_spent=total_spent,
+                            today=today,
+                            older_trips=older_trips,
+                            months_for_filter=months_for_filter,
+                            category_labels=category_labels,
+                            category_values=category_values,
+                            line_chart_labels=line_chart_labels,
+                            line_chart_values=line_chart_values)
+
+
+@bp.route('/api/months_for_trip/<int:trip_id>')
+@login_required
+def api_months_for_trip(trip_id):
+    user_trips = current_user.get_trips()
+    trip_ids = [trip.id for trip in user_trips]
+
+    if trip_id not in trip_ids:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    distinct_months = db.session.query(
+        func.strftime('%Y-%m', Expense.date)
+    ).filter(Expense.trip_id == trip_id).distinct().order_by(func.strftime('%Y-%m', Expense.date).desc()).all()
+
+    months = []
+    for (month_str,) in distinct_months:
+        year, month = map(int, month_str.split('-'))
+        month_name = datetime(year, month, 1).strftime('%B %Y')
+        months.append({
+            'value': month_str,
+            'text': month_name
+        })
+
+    return jsonify(months)
+
+@bp.route('/api/all_months')
+@login_required
+def api_all_months():
+    user_trips = current_user.get_trips()
+    trip_ids = [trip.id for trip in user_trips]
+
+    if not trip_ids:
+        return jsonify([])
+
+    distinct_months = db.session.query(
+        func.strftime('%Y-%m', Expense.date)
+    ).filter(Expense.trip_id.in_(trip_ids)).distinct().order_by(func.strftime('%Y-%m', Expense.date).desc()).all()
+
+    months = []
+    for (month_str,) in distinct_months:
+        year, month = map(int, month_str.split('-'))
+        month_name = datetime(year, month, 1).strftime('%B %Y')
+        months.append({
+            'value': month_str,
+            'text': month_name
+        })
+
+    return jsonify(months)
 
 
 @bp.route('/api/dashboard_data')
@@ -153,35 +231,67 @@ def api_dashboard_data():
         except ValueError:
             return jsonify({'error': 'Invalid month format. Use YYYY-MM'}), 400
 
-    # 1. Spending by Category (Pie Chart)
-    category_spending = db.session.query(
-        Expense.category, func.sum(Expense.amount)
-    ).select_from(base_query.subquery()).group_by(Expense.category).order_by(func.sum(Expense.amount).desc()).all()
+    # 1. Spending by Category (Pie Chart) - based on user's share
+    expenses = base_query.all()
+    category_spending = {}
+    for expense in expenses:
+        shares = expense.get_shares()
+        user_share = shares.get(str(current_user.id))
 
-    category_labels = [item[0] or 'Uncategorized' for item in category_spending]
-    category_values = [float(item[1]) for item in category_spending]
+        if user_share:
+            category = expense.category or 'Uncategorized'
+            if category not in category_spending:
+                category_spending[category] = 0
+            category_spending[category] += user_share
 
-    # 2. Spending Over Time (Line Chart)
-    if month: # If filtering by month, show daily spending
+    # Sort categories by spending
+    sorted_categories = sorted(category_spending.items(), key=lambda item: item[1], reverse=True)
+
+    category_labels = [item[0] for item in sorted_categories]
+    category_values = [float(item[1]) for item in sorted_categories]
+
+    # 2. Spending Over Time (Line Chart) - based on user's share
+    spending_data_map = {}
+    if trip_id or month: # If any filter is applied, show daily spending
         date_format_str = '%Y-%m-%d'
-        daily_spending = db.session.query(
-            func.date(Expense.date), func.sum(Expense.amount)
-        ).select_from(base_query.subquery()).group_by(func.date(Expense.date)).order_by(func.date(Expense.date)).all()
+        for expense in expenses:
+            shares = expense.get_shares()
+            user_share = shares.get(str(current_user.id))
+            if user_share:
+                day = expense.date.strftime(date_format_str)
+                if day not in spending_data_map:
+                    spending_data_map[day] = 0
+                spending_data_map[day] += user_share
 
-        spending_data_map = {item[0]: float(item[1]) for item in daily_spending}
-        line_chart_labels = [(start_date.date() + timedelta(days=i)).strftime(date_format_str) for i in range((end_date.date() - start_date.date()).days + 1)]
-        line_chart_values = [spending_data_map.get(day, 0) for day in line_chart_labels]
+        if spending_data_map:
+            min_date_str = min(spending_data_map.keys())
+            max_date_str = max(spending_data_map.keys())
+            min_date = datetime.strptime(min_date_str, '%Y-%m-%d').date()
+            max_date = datetime.strptime(max_date_str, '%Y-%m-%d').date()
 
-    else: # If no month filter, show monthly spending for last 12 months
+            if month:
+                # If month is selected, use the month's start and end for the x-axis
+                line_chart_labels = [(start_date.date() + timedelta(days=i)).strftime(date_format_str) for i in range((end_date.date() - start_date.date()).days + 1)]
+            else:
+                # Otherwise, use the range of expenses in the trip
+                line_chart_labels = [(min_date + timedelta(days=i)).strftime(date_format_str) for i in range((max_date - min_date).days + 1)]
+
+            line_chart_values = [spending_data_map.get(day, 0) for day in line_chart_labels]
+        else:
+            line_chart_labels = []
+            line_chart_values = []
+
+    else: # If no filters, show monthly spending for last 12 months across all trips
         date_format_str = '%Y-%m'
-        twelve_months_ago = (datetime.utcnow().replace(day=1) - timedelta(days=365)).replace(day=1)
-        monthly_spending_query = base_query.filter(Expense.date >= twelve_months_ago)
+        for expense in expenses:
+             shares = expense.get_shares()
+             user_share = shares.get(str(current_user.id))
+             if user_share:
+                month_key = expense.date.strftime(date_format_str)
+                if month_key not in spending_data_map:
+                    spending_data_map[month_key] = 0
+                spending_data_map[month_key] += user_share
 
-        monthly_spending = db.session.query(
-            func.strftime(date_format_str, Expense.date), func.sum(Expense.amount)
-        ).select_from(monthly_spending_query.subquery()).group_by(func.strftime(date_format_str, Expense.date)).order_by(func.strftime(date_format_str, Expense.date)).all()
-
-        spending_data_map = {item[0]: float(item[1]) for item in monthly_spending}
         line_chart_labels = [((datetime.utcnow() - timedelta(days=30*i)).strftime(date_format_str)) for i in range(11, -1, -1)]
         line_chart_values = [spending_data_map.get(month_label, 0) for month_label in line_chart_labels]
 
