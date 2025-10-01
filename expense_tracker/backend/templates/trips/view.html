@@ -148,6 +148,36 @@ Tracker{% endblock %} {% block styles %}
         color: var(--theme-contrast-color);
     }
 
+    .btn-warning {
+        background-color: var(--theme-accent-color) !important;
+        color: var(--theme-contrast-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    .btn-warning:hover,
+    .btn-warning:focus,
+    a.btn-warning:hover,
+    a.btn-warning:focus,
+    .btn-group .btn-warning:hover,
+    .btn-group .btn-warning:focus,
+    .btn-group a.btn-warning:hover,
+    .btn-group a.btn-warning:focus {
+        color: var(--theme-contrast-color) !important;
+        background-color: var(--secondary-action-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    .btn-warning:active,
+    a.btn-warning:active,
+    .btn-group .btn-warning:active,
+    .btn-group a.btn-warning:active {
+        color: var(--theme-contrast-color) !important;
+        background-color: var(--theme-accent-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    .btn-check:focus + .btn-warning,
+    .btn-warning:focus {
+        box-shadow: 0 0 0 0.25rem rgba(174, 198, 207, 0.25) !important;
+    }
+
     .panel {
         background-color: var(--panel-bg);
         border: var(--border-width) solid var(--border-color);
@@ -173,6 +203,228 @@ Tracker{% endblock %} {% block styles %}
         padding: 1rem;
         flex-grow: 1;
     }
+    
+    /* Equal height buttons on all screens */
+    @media (min-width: 768px) {
+        .trip-view-buttons .btn,
+        .trip-view-buttons form,
+        .trip-view-buttons form button,
+        .trip-view-buttons .dropdown-toggle-split {
+            height: calc(1.5em + 0.75rem + 2px) !important;
+            min-height: calc(1.5em + 0.75rem + 2px) !important;
+        }
+        
+        /* Ensure form takes up proper space */
+        .trip-view-buttons form {
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Make dropdown button slightly smaller width but same height */
+        .trip-view-buttons .dropdown-toggle-split {
+            flex: 0 0 5%;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        
+        /* Ensure consistent text alignment for all buttons */
+        .trip-view-buttons .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        /* Ensure icon spacing is consistent */
+        .trip-view-buttons .btn i {
+            margin-right: 0.5rem;
+        }
+        
+        /* Specifically center the Add Expense button text */
+        .trip-view-buttons .btn-primary {
+            justify-content: center;
+            text-align: center;
+        }
+        
+        /* Ensure the span inside Add Expense button is centered */
+        .trip-view-buttons .btn-primary span {
+            text-align: center;
+        }
+        
+        /* Ensure the Add Expense button container is properly centered */
+        .trip-view-buttons .btn-primary {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        /* Additional centering for laptop screens */
+        @media (min-width: 768px) {
+            .trip-view-buttons .btn-primary {
+                text-align: center !important;
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+            }
+        }
+    }
+    
+    /* Equal width buttons on mobile */
+    @media (max-width: 767px) {
+        .trip-view-buttons .btn:not(.dropdown-toggle-split) {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .trip-view-buttons .btn i {
+            margin-right: 0.25rem;
+        }
+        
+        .trip-view-buttons .btn span {
+            display: none !important;
+        }
+        
+        .trip-view-buttons .btn span:first-child {
+            display: inline !important;
+        }
+        
+        .trip-view-buttons {
+            display: flex !important;
+            flex-wrap: nowrap;
+        }
+        
+        .trip-view-buttons form {
+            flex: 1;
+            display: flex;
+        }
+        
+        .trip-view-buttons form button {
+            width: 100%;
+        }
+        
+        /* Adjust dropdown button to be smaller width but same height */
+        .trip-view-buttons .dropdown-toggle-split {
+            flex: 0 0 15%;
+            padding-left: 0.25rem;
+            padding-right: 0.25rem;
+        }
+    }
+    
+    /* Ensure all buttons in the group have equal height on all screens */
+    .trip-view-buttons .btn,
+    .trip-view-buttons form button,
+    .trip-view-buttons .dropdown-toggle,
+    .trip-view-buttons .dropdown-toggle-split {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: calc(1.5em + 0.75rem + 2px);
+        min-height: calc(1.5em + 0.75rem + 2px);
+    }
+    
+    /* Ensure form elements also have consistent height */
+    .trip-view-buttons form {
+        height: calc(1.5em + 0.75rem + 2px);
+        min-height: calc(1.5em + 0.75rem + 2px);
+    }
+    
+    /* Hide text on very small screens for better fit */
+    @media (max-width: 400px) {
+        .trip-view-buttons .btn span {
+            display: none !important;
+        }
+        
+        .trip-view-buttons .btn i {
+            margin-right: 0;
+        }
+        
+        /* On very small screens, make dropdown even smaller */
+        .trip-view-buttons .dropdown-toggle-split {
+            flex: 0 0 8%;
+            padding-left: 0.125rem;
+            padding-right: 0.125rem;
+        }
+        
+        /* Ensure height consistency on very small screens */
+        .trip-view-buttons .btn,
+        .trip-view-buttons form button,
+        .trip-view-buttons .dropdown-toggle-split {
+            height: calc(1.5em + 0.75rem + 2px) !important;
+            min-height: calc(1.5em + 0.75rem + 2px) !important;
+        }
+        
+        .trip-view-buttons form {
+            height: calc(1.5em + 0.75rem + 2px) !important;
+            min-height: calc(1.5em + 0.75rem + 2px) !important;
+        }
+    }
+    
+    /* Ensure form button fills container */
+    .trip-view-buttons form {
+        height: 100%;
+    }
+    
+    /* Ensure consistent height for all buttons by default */
+    .trip-view-buttons .btn,
+    .trip-view-buttons form button,
+    .trip-view-buttons .dropdown-toggle-split {
+        height: calc(1.5em + 0.75rem + 2px);
+        min-height: calc(1.5em + 0.75rem + 2px);
+    }
+    
+    /* Fix for dropdown toggle split */
+    
+    /* Ensure proper flex behavior for all buttons */
+    .trip-view-buttons .btn-group {
+        display: flex;
+        height: 100%;
+        width: 100%;
+    }
+    
+    /* Ensure dropdown button has same height as other buttons */
+    .trip-view-buttons .dropdown-toggle-split {
+        height: calc(1.5em + 0.75rem + 2px) !important;
+        min-height: calc(1.5em + 0.75rem + 2px) !important;
+    }
+    
+    /* Mobile-specific adjustments for equal button sizing */
+    @media (max-width: 767px) {
+        .trip-view-buttons .btn-group {
+            display: flex !important;
+            flex: 1;
+        }
+        
+        /* Make dropdown button smaller width but same height */
+        .trip-view-buttons .dropdown-toggle-split {
+            flex: 0 0 12% !important;
+            padding-left: 0.25rem;
+            padding-right: 0.25rem;
+            height: calc(1.5em + 0.75rem + 2px) !important;
+            min-height: calc(1.5em + 0.75rem + 2px) !important;
+        }
+        
+        /* Ensure other buttons take up remaining space equally */
+        .trip-view-buttons > :not(.dropdown-toggle-split) {
+            flex: 1;
+        }
+        
+        /* Ensure all buttons have consistent height on mobile */
+        .trip-view-buttons .btn,
+        .trip-view-buttons form button {
+            height: calc(1.5em + 0.75rem + 2px) !important;
+            min-height: calc(1.5em + 0.75rem + 2px) !important;
+        }
+        
+        /* Ensure form container has proper height */
+        .trip-view-buttons form {
+            height: calc(1.5em + 0.75rem + 2px) !important;
+            min-height: calc(1.5em + 0.75rem + 2px) !important;
+            display: flex;
+            align-items: center;
+        }
+    }
 </style>
 {% endblock %} {% block content %}
 <div class="row mb-4">
@@ -188,27 +440,27 @@ Tracker{% endblock %} {% block styles %}
         {% endif %}
     </div>
     <div class="col-md-4 text-end">
-        <div class="btn-group w-100 trip-view-buttons" role="group">
+        <div class="btn-group w-100 trip-view-buttons d-flex" role="group">
             <a
                 href="{{ url_for('expenses.list_expenses', trip_id=trip.id) }}"
-                class="btn btn-outline-primary"
+                class="btn btn-outline-primary flex-fill"
             >
                 <i class="fas fa-list me-2"></i>
                 <span class="d-none d-md-inline">Expenses</span>
             </a>
-        <a href="{{ url_for('expenses.add_expense', trip_id=trip.id) }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i>
-            <span class="d-none d-md-inline ms-2">New Expense</span>
+        <a href="{{ url_for('expenses.add_expense', trip_id=trip.id) }}" class="btn btn-primary flex-fill">
+            <i class="fas fa-plus me-2"></i>
+            <span class="d-none d-md-inline">New Expense</span>
         </a>
             {% if trip.admin_id == current_user.id %}
             <form
                 action="{{ url_for('trips.sync_trip_balances', trip_id=trip.id) }}"
                 method="POST"
-                class="d-inline"
+                class="d-inline flex-grow-1"
             >
                 <button
                     type="submit"
-                    class="btn btn-warning"
+                    class="btn btn-warning w-100"
                     title="Recalculate all balances"
                     onmouseover="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#BDBDBD'; this.style.color='#000000'; }"
                     onmouseout="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#FFFFFF'; this.style.color='#000000'; }"
@@ -220,7 +472,7 @@ Tracker{% endblock %} {% block styles %}
             {% endif %}
             <button
                 type="button"
-                class="btn btn-primary dropdown-toggle dropdown-toggle-split"
+                class="btn btn-primary dropdown-toggle dropdown-toggle-split flex-fill"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
                 onmouseover="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#BDBDBD'; this.style.color='#000000'; }"
