@@ -20,8 +20,8 @@ def index():
 @bp.route("/dashboard")
 @login_required
 def dashboard():
-    # Get all trips for the user
-    trips = current_user.get_trips()
+    # Get all trips for the user and sort by start date (most recent first)
+    trips = sorted(current_user.get_trips(), key=lambda t: t.start_date, reverse=True)
     trip_ids = [trip.id for trip in trips]
 
     # Get recent trips (for display in the trips section) - sorted by start date (most recent first)

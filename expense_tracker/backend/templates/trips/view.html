@@ -177,6 +177,47 @@ Tracker{% endblock %} {% block styles %}
     .btn-warning:focus {
         box-shadow: 0 0 0 0.25rem rgba(174, 198, 207, 0.25) !important;
     }
+    
+    /* Ensure all buttons in trip view use theme colors consistently */
+    .trip-view-buttons .btn-primary,
+    .trip-view-buttons .btn-warning,
+    .trip-view-buttons .btn-outline-primary,
+    .trip-view-buttons .dropdown-toggle-split {
+        background-color: var(--theme-accent-color) !important;
+        color: var(--theme-contrast-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    
+    /* Hover states for all buttons */
+    .trip-view-buttons .btn-primary:hover,
+    .trip-view-buttons .btn-warning:hover,
+    .trip-view-buttons .btn-outline-primary:hover,
+    .trip-view-buttons .dropdown-toggle-split:hover {
+        background-color: var(--secondary-action-color) !important;
+        color: var(--theme-contrast-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    
+    /* Focus states for all buttons */
+    .trip-view-buttons .btn-primary:focus,
+    .trip-view-buttons .btn-warning:focus,
+    .trip-view-buttons .btn-outline-primary:focus,
+    .trip-view-buttons .dropdown-toggle-split:focus {
+        background-color: var(--theme-accent-color) !important;
+        color: var(--theme-contrast-color) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 0 0 0.25rem rgba(174, 198, 207, 0.25) !important;
+    }
+    
+    /* Active states for all buttons */
+    .trip-view-buttons .btn-primary:active,
+    .trip-view-buttons .btn-warning:active,
+    .trip-view-buttons .btn-outline-primary:active,
+    .trip-view-buttons .dropdown-toggle-split:active {
+        background-color: var(--theme-accent-color) !important;
+        color: var(--theme-contrast-color) !important;
+        border-color: var(--border-color) !important;
+    }
 
     .panel {
         background-color: var(--panel-bg);
@@ -265,6 +306,25 @@ Tracker{% endblock %} {% block styles %}
                 padding-left: 0.5rem !important;
                 padding-right: 0.5rem !important;
             }
+        }
+            
+        /* Black theme specific styling for trip view buttons */
+        .black-theme-active .trip-view-buttons .btn-primary,
+        .black-theme-active .trip-view-buttons .btn-warning,
+        .black-theme-active .trip-view-buttons .btn-outline-primary,
+        .black-theme-active .trip-view-buttons .dropdown-toggle-split {
+            background-color: var(--theme-accent-color) !important;
+            color: var(--theme-contrast-color) !important;
+            border-color: var(--border-color) !important;
+        }
+            
+        .black-theme-active .trip-view-buttons .btn-primary:hover,
+        .black-theme-active .trip-view-buttons .btn-warning:hover,
+        .black-theme-active .trip-view-buttons .btn-outline-primary:hover,
+        .black-theme-active .trip-view-buttons .dropdown-toggle-split:hover {
+            background-color: var(--secondary-action-color) !important;
+            color: var(--theme-contrast-color) !important;
+            border-color: var(--border-color) !important;
         }
     }
     
@@ -462,8 +522,6 @@ Tracker{% endblock %} {% block styles %}
                     type="submit"
                     class="btn btn-warning w-100"
                     title="Recalculate all balances"
-                    onmouseover="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#BDBDBD'; this.style.color='#000000'; }"
-                    onmouseout="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#FFFFFF'; this.style.color='#000000'; }"
                 >
                     <i class="fas fa-sync-alt me-2"></i>
                     <span class="d-none d-lg-inline">Sync</span>
@@ -475,8 +533,6 @@ Tracker{% endblock %} {% block styles %}
                 class="btn btn-primary dropdown-toggle dropdown-toggle-split flex-fill"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
-                onmouseover="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#BDBDBD'; this.style.color='#000000'; }"
-                onmouseout="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#FFFFFF'; this.style.color='#000000'; }"
             >
                 <span class="visually-hidden">Toggle Dropdown</span>
             </button>

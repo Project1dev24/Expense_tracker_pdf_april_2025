@@ -239,13 +239,13 @@ endblock %} {% block content %}
                 <select id="category-trip-filter" class="form-select">
                     <option value="all">All Trips</option>
                     {% for trip in trips %}
-                    <option value="{{ trip.id }}">{{ trip.name }}</option>
+                    <option value="{{ trip.id }}" {% if loop.first %}selected{% endif %}>{{ trip.name }}</option>
                     {% endfor %}
                 </select>
                 <select id="category-month-filter" class="form-select">
                     <option value="all">All Time</option>
                     {% for month in months_for_filter %}
-                    <option value="{{ month.value }}">{{ month.text }}</option>
+                    <option value="{{ month.value }}" {% if loop.first %}selected{% endif %}>{{ month.text }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -253,6 +253,8 @@ endblock %} {% block content %}
                 <div
                     id="categoryPieChartContainer"
                     class="chart-container flex-grow-1 d-flex align-items-center justify-content-center"
+                    data-category-labels="{{ category_labels|tojson }}"
+                    data-category-values="{{ category_values|tojson }}"
                 >
                     <canvas id="categoryPieChart"></canvas>
                 </div>
@@ -268,7 +270,7 @@ endblock %} {% block content %}
                 <select id="history-month-filter" class="form-select">
                     <option value="all">All Time</option>
                     {% for month in months_for_filter %}
-                    <option value="{{ month.value }}">{{ month.text }}</option>
+                    <option value="{{ month.value }}" {% if loop.first %}selected{% endif %}>{{ month.text }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -276,6 +278,8 @@ endblock %} {% block content %}
                 <div
                     id="spendingLineChartContainer"
                     class="chart-container flex-grow-1 d-flex align-items-center justify-content-center"
+                    data-line-labels="{{ line_chart_labels|tojson }}"
+                    data-line-values="{{ line_chart_values|tojson }}"
                 >
                     <canvas id="spendingLineChart"></canvas>
                 </div>
@@ -672,88 +676,95 @@ endblock %} {% block content %}
         }
 
         const initOrUpdateCategoryChart = (data) => {
-            if (categoryPieChart) {
-                categoryPieChart.destroy();
-            }
-            const canvas = resetChartContainer("categoryPieChartContainer", "categoryPieChart");
-            if (data.category_values && data.category_values.length > 0) {
-                categoryPieChart = new Chart(canvas, {
-                    type: "doughnut",
-                    data: {
-                        labels: data.category_labels,
-                        datasets: [
-                            {
-                                data: data.category_values,
-                                backgroundColor: chartColors,
-                                borderColor: "#000",
-                                borderWidth: 2,
-                            },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: "top",
+            try {
+                if (categoryPieChart) {
+                    categoryPieChart.destroy();
+                }
+                const canvas = resetChartContainer("categoryPieChartContainer", "categoryPieChart");
+                if (data.category_values && data.category_values.length > 0) {
+                    categoryPieChart = new Chart(canvas, {
+                        type: "doughnut",
+                        data: {
+                            labels: data.category_labels,
+                            datasets: [
+                                {
+                                    data: data.category_values,
+                                    backgroundColor: chartColors,
+                                    borderColor: "#000",
+                                    borderWidth: 2,
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: "top",
+                                },
                             },
                         },
-                    },
-                });
-            } else {
-                showNoData("categoryPieChartContainer");
+                    });
+                } else {
+                    showNoData("categoryPieChartContainer");
+                }
+            } catch (error) {
+                console.error("Error initializing category chart:", error);
+                showError("categoryPieChartContainer", "Error initializing chart. Please try again.");
             }
         };
 
         const initOrUpdateSpendingChart = (data) => {
-            if (spendingLineChart) {
-                spendingLineChart.destroy();
-            }
-            const canvas = resetChartContainer("spendingLineChartContainer", "spendingLineChart");
-            if (data.line_chart_values && data.line_chart_values.length > 0) {
-                spendingLineChart = new Chart(canvas, {
-                    type: "line",
-                    data: {
-                        labels: data.line_chart_labels,
-                        datasets: [
-                            {
-                                label: "Spending",
-                                data: data.line_chart_values,
-                                fill: true,
-                                backgroundColor: "rgba(174, 198, 207, 0.2)",
-                                borderColor: "#AEC6CF",
-                                tension: 0.4,
-                                borderWidth: 2,
-                            },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: {
-                                grid: {
-                                    display: false,
+            try {
+                if (spendingLineChart) {
+                    spendingLineChart.destroy();
+                }
+                const canvas = resetChartContainer("spendingLineChartContainer", "spendingLineChart");
+                if (data.line_chart_values && data.line_chart_values.length > 0) {
+                    spendingLineChart = new Chart(canvas, {
+                        type: "line",
+                        data: {
+                            labels: data.line_chart_labels,
+                            datasets: [
+                                {
+                                    label: "Spending",
+                                    data: data.line_chart_values,
+                                    fill: true,
+                                    backgroundColor: "rgba(174, 198, 207, 0.2)",
+                                    borderColor: "#AEC6CF",
+                                    tension: 0.4,
+                                    borderWidth: 2,
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: false,
+                                    },
+                                },
+                                y: {
+                                    beginAtZero: true,
                                 },
                             },
-                            y: {
-                                beginAtZero: true,
-                            },
                         },
-                    },
-                });
-            } else {
-                showNoData("spendingLineChartContainer");
+                    });
+                } else {
+                    showNoData("spendingLineChartContainer");
+                }
+            } catch (error) {
+                console.error("Error initializing spending chart:", error);
+                showError("spendingLineChartContainer", "Error initializing chart. Please try again.");
             }
         };
 
+        // Update Spending by Category chart
         const updateCategoryChart = async () => {
-            const tripId = document.getElementById(
-                "category-trip-filter",
-            ).value;
-            const month = document.getElementById(
-                "category-month-filter",
-            ).value;
+            const tripId = document.getElementById("category-trip-filter").value;
+            const month = document.getElementById("category-month-filter").value;
 
             showLoading("categoryPieChartContainer");
 
@@ -763,28 +774,25 @@ endblock %} {% block content %}
 
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error("Failed to fetch data");
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch data: ${response.status} ${errorText}`);
+                }
                 const data = await response.json();
                 initOrUpdateCategoryChart(data);
             } catch (error) {
                 console.error("Error fetching category chart data:", error);
-                showError("categoryPieChartContainer", "Error loading data. Please try again.");
+                showError("categoryPieChartContainer", `Error loading data: ${error.message}`);
             }
         };
 
+        // Update month filter options based on selected trip
         const updateCategoryMonthFilter = async () => {
-            const tripId = document.getElementById(
-                "category-trip-filter",
-            ).value;
-            const monthFilter = document.getElementById(
-                "category-month-filter",
-            );
+            const tripId = document.getElementById("category-trip-filter").value;
+            const monthFilter = document.getElementById("category-month-filter");
             monthFilter.disabled = true;
 
-            let url =
-                tripId === "all"
-                    ? "/api/all_months"
-                    : `/api/months_for_trip/${tripId}`;
+            let url = tripId === "all" ? "/api/all_months" : `/api/months_for_trip/${tripId}`;
 
             try {
                 const response = await fetch(url);
@@ -792,26 +800,34 @@ endblock %} {% block content %}
                 const months = await response.json();
                 const currentSelection = monthFilter.value;
 
+                // Clear and repopulate month options
                 monthFilter.innerHTML = '<option value="all">All Time</option>';
                 months.forEach((month) => {
                     const option = new Option(month.text, month.value);
                     monthFilter.add(option);
                 });
 
-                if (
-                    currentSelection !== "all" &&
-                    months.some((m) => m.value === currentSelection)
-                ) {
+                // Restore previous selection if still valid, otherwise select the first available month
+                if (currentSelection !== "all" && months.some((m) => m.value === currentSelection)) {
                     monthFilter.value = currentSelection;
+                } else if (months.length > 0) {
+                    // Select the first month if no valid selection exists
+                    monthFilter.value = months[0].value;
+                } else {
+                    // Default to "all" if no months available
+                    monthFilter.value = "all";
                 }
             } catch (error) {
                 console.error("Error fetching months:", error);
+                showError("categoryPieChartContainer", "Error loading month data. Please try again.");
             } finally {
                 monthFilter.disabled = false;
+                // Update the chart with new data
                 updateCategoryChart();
             }
         };
 
+        // Update Spending History chart
         const updateHistoryChart = async () => {
             const month = document.getElementById("history-month-filter").value;
             showLoading("spendingLineChartContainer");
@@ -821,37 +837,48 @@ endblock %} {% block content %}
 
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error("Failed to fetch data");
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch data: ${response.status} ${errorText}`);
+                }
                 const data = await response.json();
                 initOrUpdateSpendingChart(data);
             } catch (error) {
                 console.error("Error fetching history chart data:", error);
-                showError("spendingLineChartContainer", "Error loading data. Please try again.");
+                showError("spendingLineChartContainer", `Error loading data: ${error.message}`);
             }
         };
 
-        document
-            .getElementById("category-trip-filter")
-            .addEventListener("change", updateCategoryMonthFilter);
-        document
-            .getElementById("category-month-filter")
-            .addEventListener("change", updateCategoryChart);
-        document
-            .getElementById("history-month-filter")
-            .addEventListener("change", updateHistoryChart);
+        // Add event listeners for independent chart filters
+        document.getElementById("category-trip-filter").addEventListener("change", updateCategoryMonthFilter);
+        document.getElementById("category-month-filter").addEventListener("change", updateCategoryChart);
+        document.getElementById("history-month-filter").addEventListener("change", updateHistoryChart);
 
         // Initial chart load from server-rendered data
-        const initialCategoryData = {
-            category_labels: {{ category_labels|tojson|safe }},
-            category_values: {{ category_values|tojson|safe }}
-        };
-        initOrUpdateCategoryChart(initialCategoryData);
+        try {
+            const initialCategoryData = {
+                category_labels: JSON.parse(document.getElementById('categoryPieChartContainer').getAttribute('data-category-labels') || '[]'),
+                category_values: JSON.parse(document.getElementById('categoryPieChartContainer').getAttribute('data-category-values') || '[]')
+            };
+            initOrUpdateCategoryChart(initialCategoryData);
 
-        const initialSpendingData = {
-            line_chart_labels: {{ line_chart_labels|tojson|safe }},
-            line_chart_values: {{ line_chart_values|tojson|safe }}
-        };
-        initOrUpdateSpendingChart(initialSpendingData);
+            const initialSpendingData = {
+                line_chart_labels: JSON.parse(document.getElementById('spendingLineChartContainer').getAttribute('data-line-labels') || '[]'),
+                line_chart_values: JSON.parse(document.getElementById('spendingLineChartContainer').getAttribute('data-line-values') || '[]')
+            };
+            initOrUpdateSpendingChart(initialSpendingData);
+            
+            // Update the category month filter based on the default trip selection
+            // This will also trigger an update of the category chart with the default selections
+            updateCategoryMonthFilter();
+            
+            // Update the history chart with the default month selection
+            updateHistoryChart();
+        } catch (error) {
+            console.error("Error loading initial chart data:", error);
+            showError("categoryPieChartContainer", "Error loading initial data.");
+            showError("spendingLineChartContainer", "Error loading initial data.");
+        }
     });
 </script>
 {% endblock %}
