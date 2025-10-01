@@ -104,7 +104,7 @@ endblock %} {% block content %}
 <div class="row">
     <div class="col-lg-6 mb-4">
         <!-- Trips Section -->
-        <div class="panel">
+        <div class="panel h-100">
             <div class="panel-header">
                 <h5 class="fw-bold mb-0">Recent Trips</h5>
             </div>
@@ -112,12 +112,12 @@ endblock %} {% block content %}
                 class="panel-body d-flex align-items-center justify-content-center align-items-lg-stretch"
             >
                 {% if recent_trips %} {% if recent_trips|length > 1 %}
-                <div class="embla" id="tripsCarousel">
+                <div class="embla w-100" id="tripsCarousel">
                     <div class="embla__viewport">
                         <div class="embla__container">
                             {% for trip in recent_trips %}
                             <div class="embla__slide">
-                                <div class="trip-card">
+                                <div class="trip-card h-100">
                                     <div
                                         class="d-flex justify-content-between align-items-start"
                                     >
@@ -146,7 +146,7 @@ endblock %} {% block content %}
                     </div>
                 </div>
                 {% else %} {% set trip = recent_trips[0] %}
-                <div class="trip-card">
+                <div class="trip-card h-100">
                     <div
                         class="d-flex justify-content-between align-items-start"
                     >
@@ -168,7 +168,9 @@ endblock %} {% block content %}
                     </div>
                 </div>
                 {% endif %} {% else %}
-                <div class="text-center p-5">
+                <div
+                    class="text-center p-5 h-100 d-flex flex-column justify-content-center"
+                >
                     <p class="h5 mb-3">You don't have any trips yet.</p>
                     <a
                         href="{{ url_for('trips.add_trip') }}"
@@ -182,13 +184,15 @@ endblock %} {% block content %}
     </div>
     <div class="col-lg-6 mb-4">
         <!-- Expenses Section -->
-        <div class="panel d-flex flex-column">
+        <div class="panel h-100 d-flex flex-column">
             <div class="panel-header">
                 <h5 class="fw-bold mb-0">Recent Activity</h5>
             </div>
-            <div class="panel-body p-0 flex-grow-1">
+            <div class="panel-body p-0 flex-grow-1 d-flex flex-column">
                 {% if recent_expenses %}
-                <div class="list-group list-group-flush activity-list">
+                <div
+                    class="list-group list-group-flush activity-list flex-grow-1"
+                >
                     {% for item in recent_expenses %}
                     <div class="list-group-item">
                         <div class="d-flex align-items-center">
@@ -214,7 +218,7 @@ endblock %} {% block content %}
                 </div>
                 {% else %}
                 <div
-                    class="text-center p-5 d-flex flex-column justify-content-center align-items-center h-100"
+                    class="text-center p-5 d-flex flex-column justify-content-center align-items-center flex-grow-1"
                 >
                     <p>No recent activity.</p>
                 </div>
@@ -226,8 +230,8 @@ endblock %} {% block content %}
 
 <!-- Charts Row -->
 <div class="row">
-    <div class="col-lg-5 mb-4">
-        <div class="panel">
+    <div class="col-lg-5 col-md-12 mb-4">
+        <div class="panel h-100">
             <div class="panel-header">
                 <h5 class="fw-bold mb-0">Spending by Category</h5>
             </div>
@@ -245,30 +249,41 @@ endblock %} {% block content %}
                     {% endfor %}
                 </select>
             </div>
-            <div class="panel-body">
-                <canvas id="categoryPieChart"></canvas>
+            <div class="panel-body d-flex flex-column">
+                <div
+                    id="categoryPieChartContainer"
+                    class="chart-container flex-grow-1 d-flex align-items-center justify-content-center"
+                >
+                    <canvas id="categoryPieChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-lg-7 mb-4">
-        <div class="panel">
+    <div class="col-lg-7 col-md-12 mb-4">
+        <div class="panel h-100">
             <div class="panel-header">
                 <h5 class="fw-bold mb-0">Spending History</h5>
             </div>
             <div class="chart-filters">
-                <select id="spending-trip-filter" class="form-select">
-                    <option value="all">All Trips</option>
-                    {% for trip in trips %}
-                    <option value="{{ trip.id }}">{{ trip.name }}</option>
+                <select id="history-month-filter" class="form-select">
+                    <option value="all">All Time</option>
+                    {% for month in months_for_filter %}
+                    <option value="{{ month.value }}">{{ month.text }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="panel-body">
-                <canvas id="spendingLineChart"></canvas>
+            <div class="panel-body d-flex flex-column">
+                <div
+                    id="spendingLineChartContainer"
+                    class="chart-container flex-grow-1 d-flex align-items-center justify-content-center"
+                >
+                    <canvas id="spendingLineChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %} {% block styles %}
 <style>
     :root {
@@ -349,6 +364,7 @@ endblock %} {% block content %}
         display: flex;
         flex-direction: column;
         overflow: hidden; /* Ensures children conform to rounded corners */
+        height: 100%;
     }
 
     .panel-header {
@@ -363,6 +379,8 @@ endblock %} {% block content %}
     .panel-body {
         padding: 1rem;
         flex-grow: 1;
+        display: flex;
+        flex-direction: column;
     }
 
     .stat-card {
@@ -370,6 +388,7 @@ endblock %} {% block content %}
         border-radius: 1rem;
         padding: 1.5rem;
         background-color: var(--theme-accent-color);
+        height: 100%;
     }
     .stat-card h6,
     .stat-card .small,
@@ -406,6 +425,7 @@ endblock %} {% block content %}
     .embla__slide {
         flex: 0 0 var(--slide-size);
         min-width: 0;
+        height: 100%;
     }
 
     /* Recent Activity List */
@@ -452,127 +472,386 @@ endblock %} {% block content %}
         border: var(--border-width) solid var(--border-color);
         border-radius: 0.5rem;
     }
+
+    /* Chart Containers */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    /* Responsive adjustments for larger screens */
+    @media (min-width: 992px) {
+        .chart-container {
+            height: 350px;
+        }
+
+        /* Ensure both panels in the main content row have consistent heights */
+        .panel-body.d-flex.align-items-center.justify-content-center.align-items-lg-stretch {
+            min-height: 300px;
+        }
+
+        .activity-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    }
+
+    /* Tablet adjustments */
+    @media (min-width: 768px) and (max-width: 991px) {
+        .chart-container {
+            height: 300px;
+        }
+
+        .trip-card {
+            min-height: 220px;
+        }
+
+        .activity-list {
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        /* Ensure both panels have consistent heights on tablet */
+        .panel {
+            min-height: 300px;
+        }
+    }
+
+    /* Mobile-specific adjustments */
+    @media (max-width: 767px) {
+        .chart-container {
+            height: 250px;
+        }
+
+        .trip-card {
+            min-height: 200px;
+        }
+
+        .activity-list {
+            max-height: none;
+            overflow-y: visible;
+        }
+
+        /* Allow panels to grow naturally on mobile but maintain minimum height */
+        .panel {
+            min-height: 250px;
+        }
+
+        /* Ensure Recent Activity panel has consistent height with Recent Trips on mobile */
+        .col-lg-6.mb-4:nth-child(2) .panel {
+            min-height: 250px;
+        }
+
+        /* Adjust chart filters for mobile */
+        .chart-filters {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .chart-filters .form-select {
+            width: 100%;
+        }
+    }
+
+    /* Extra small devices */
+    @media (max-width: 576px) {
+        .chart-container {
+            height: 200px;
+        }
+
+        .trip-card {
+            min-height: 180px;
+        }
+
+        /* Maintain panel heights on extra small devices */
+        .panel {
+            min-height: 230px;
+        }
+    }
+
+    /* Ensure charts use full container width and are centered */
+    .chart-container canvas {
+        max-width: 100% !important;
+        max-height: 100% !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* Loading indicator */
+    .chart-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+
+    .chart-error {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    /* No data message */
+    .chart-no-data {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+        text-align: center;
+        padding: 1rem;
+    }
 </style>
 {% endblock %} {% block scripts %}
 <script src="https://unpkg.com/embla-carousel@latest/embla-carousel.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Carousel
-      const emblaNode = document.querySelector('#tripsCarousel .embla__viewport');
-      if (emblaNode) {
-        const emblaApi = EmblaCarousel(emblaNode, {
-          loop: true,
-          align: 'start'
-        });
-      }
-
-      // --- Charts ---
-      let categoryPieChart, spendingLineChart;
-      const chartColors = ['#AEC6CF', '#B2D8B2', '#C3B1E1', '#FFDAB9', '#F4C2C2', '#E6E6FA', '#DDBBFF'];
-
-      const categoryCtx = document.getElementById('categoryPieChart');
-      const lineCtx = document.getElementById('spendingLineChart');
-
-      const initCharts = (data) => {
-          if (categoryPieChart) categoryPieChart.destroy();
-          if (spendingLineChart) spendingLineChart.destroy();
-
-          if (categoryCtx && data.category_values.length > 0) {
-              categoryPieChart = new Chart(categoryCtx, {
-                  type: 'doughnut',
-                  data: {
-                      labels: data.category_labels,
-                      datasets: [{
-                          data: data.category_values,
-                          backgroundColor: chartColors,
-                          borderColor: '#000',
-                          borderWidth: 2,
-                      }]
-                  },
-                  options: { responsive: true, plugins: { legend: { position: 'top' } } }
-              });
-          } else if (categoryCtx) {
-              categoryCtx.parentElement.innerHTML = '<div class="text-center p-5">No category data to display for this period.</div>';
-          }
-
-          if (lineCtx && data.line_chart_values.length > 0) {
-              spendingLineChart = new Chart(lineCtx, {
-                  type: 'line',
-                  data: {
-                      labels: data.line_chart_labels,
-                      datasets: [{
-                          label: 'Spending',
-                          data: data.line_chart_values,
-                          fill: true,
-                          backgroundColor: 'rgba(174, 198, 207, 0.2)',
-                          borderColor: '#AEC6CF',
-                          tension: 0.1,
-                          borderWidth: 2
-                      }]
-                  },
-                  options: { responsive: true, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
-              });
-          } else if (lineCtx) {
-              lineCtx.parentElement.innerHTML = '<div class="text-center p-5">No spending data to display for this period.</div>';
-          }
-      };
-
-      const updateCharts = async () => {
-          const tripId = document.getElementById('category-trip-filter').value;
-          const month = document.getElementById('category-month-filter').value;
-
-          let url = `/api/dashboard_data?`;
-          if (tripId !== 'all') url += `trip_id=${tripId}&`;
-          if (month !== 'all') url += `month=${month}&`;
-
-          try {
-              const response = await fetch(url);
-              const data = await response.json();
-              initCharts(data);
-          } catch (error) {
-              console.error('Error fetching chart data:', error);
-          }
-      };
-
-      const updateMonthFilter = async () => {
-        const tripId = document.getElementById('category-trip-filter').value;
-        const monthFilter = document.getElementById('category-month-filter');
-
-        let url = tripId === 'all' ? '/api/all_months' : `/api/months_for_trip/${tripId}`;
-
-        try {
-            const response = await fetch(url);
-            const months = await response.json();
-
-            monthFilter.innerHTML = '<option value="all">All Time</option>';
-            months.forEach(month => {
-                const option = new Option(month.text, month.value);
-                monthFilter.add(option);
-            });
-
-            // After updating the months, refresh the charts
-            updateCharts();
-        } catch (error) {
-            console.error('Error fetching months:', error);
+    document.addEventListener("DOMContentLoaded", function () {
+        // Carousel
+        const emblaNode = document.querySelector(
+            "#tripsCarousel .embla__viewport",
+        );
+        if (emblaNode) {
+            try {
+                const emblaApi = EmblaCarousel(emblaNode, {
+                    loop: true,
+                    align: "start",
+                });
+            } catch (error) {
+                console.error("Error initializing carousel:", error);
+            }
         }
-      };
 
-      // Add event listeners
-      document.getElementById('category-trip-filter').addEventListener('change', updateMonthFilter);
-      document.getElementById('category-month-filter').addEventListener('change', updateCharts);
-      document.getElementById('spending-trip-filter').addEventListener('change', updateCharts);
+        // --- Charts ---
+        let categoryPieChart, spendingLineChart;
+        const chartColors = [
+            "#AEC6CF",
+            "#B2D8B2",
+            "#C3B1E1",
+            "#FFDAB9",
+            "#F4C2C2",
+            "#E6E6FA",
+            "#DDBBFF",
+        ];
 
+        function showLoading(containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML =
+                    '<div class="chart-loading"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+            }
+        }
 
-      // Initial chart load
-      initCharts({
-          category_labels: {{ category_labels|tojson }},
-          category_values: {{ category_values|tojson }},
-          line_chart_labels: {{ line_chart_labels|tojson }},
-          line_chart_values: {{ line_chart_values|tojson }}
-      });
+        function showError(containerId, message) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = `<div class="chart-error"><p>${message}</p></div>`;
+            }
+        }
 
+        function showNoData(containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML =
+                    '<div class="chart-no-data"><p>No data available for the selected filters.</p></div>';
+            }
+        }
+
+        function resetChartContainer(containerId, canvasId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = `<canvas id="${canvasId}"></canvas>`;
+            }
+            return document.getElementById(canvasId);
+        }
+
+        const initOrUpdateCategoryChart = (data) => {
+            if (categoryPieChart) {
+                categoryPieChart.destroy();
+            }
+            const canvas = resetChartContainer("categoryPieChartContainer", "categoryPieChart");
+            if (data.category_values && data.category_values.length > 0) {
+                categoryPieChart = new Chart(canvas, {
+                    type: "doughnut",
+                    data: {
+                        labels: data.category_labels,
+                        datasets: [
+                            {
+                                data: data.category_values,
+                                backgroundColor: chartColors,
+                                borderColor: "#000",
+                                borderWidth: 2,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: "top",
+                            },
+                        },
+                    },
+                });
+            } else {
+                showNoData("categoryPieChartContainer");
+            }
+        };
+
+        const initOrUpdateSpendingChart = (data) => {
+            if (spendingLineChart) {
+                spendingLineChart.destroy();
+            }
+            const canvas = resetChartContainer("spendingLineChartContainer", "spendingLineChart");
+            if (data.line_chart_values && data.line_chart_values.length > 0) {
+                spendingLineChart = new Chart(canvas, {
+                    type: "line",
+                    data: {
+                        labels: data.line_chart_labels,
+                        datasets: [
+                            {
+                                label: "Spending",
+                                data: data.line_chart_values,
+                                fill: true,
+                                backgroundColor: "rgba(174, 198, 207, 0.2)",
+                                borderColor: "#AEC6CF",
+                                tension: 0.4,
+                                borderWidth: 2,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false,
+                                },
+                            },
+                            y: {
+                                beginAtZero: true,
+                            },
+                        },
+                    },
+                });
+            } else {
+                showNoData("spendingLineChartContainer");
+            }
+        };
+
+        const updateCategoryChart = async () => {
+            const tripId = document.getElementById(
+                "category-trip-filter",
+            ).value;
+            const month = document.getElementById(
+                "category-month-filter",
+            ).value;
+
+            showLoading("categoryPieChartContainer");
+
+            let url = `/api/dashboard_data?`;
+            if (tripId !== "all") url += `trip_id=${tripId}&`;
+            if (month !== "all") url += `month=${month}&`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Failed to fetch data");
+                const data = await response.json();
+                initOrUpdateCategoryChart(data);
+            } catch (error) {
+                console.error("Error fetching category chart data:", error);
+                showError("categoryPieChartContainer", "Error loading data. Please try again.");
+            }
+        };
+
+        const updateCategoryMonthFilter = async () => {
+            const tripId = document.getElementById(
+                "category-trip-filter",
+            ).value;
+            const monthFilter = document.getElementById(
+                "category-month-filter",
+            );
+            monthFilter.disabled = true;
+
+            let url =
+                tripId === "all"
+                    ? "/api/all_months"
+                    : `/api/months_for_trip/${tripId}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Failed to fetch months");
+                const months = await response.json();
+                const currentSelection = monthFilter.value;
+
+                monthFilter.innerHTML = '<option value="all">All Time</option>';
+                months.forEach((month) => {
+                    const option = new Option(month.text, month.value);
+                    monthFilter.add(option);
+                });
+
+                if (
+                    currentSelection !== "all" &&
+                    months.some((m) => m.value === currentSelection)
+                ) {
+                    monthFilter.value = currentSelection;
+                }
+            } catch (error) {
+                console.error("Error fetching months:", error);
+            } finally {
+                monthFilter.disabled = false;
+                updateCategoryChart();
+            }
+        };
+
+        const updateHistoryChart = async () => {
+            const month = document.getElementById("history-month-filter").value;
+            showLoading("spendingLineChartContainer");
+
+            let url = `/api/spending_history?`;
+            if (month !== "all") url += `month=${month}&`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Failed to fetch data");
+                const data = await response.json();
+                initOrUpdateSpendingChart(data);
+            } catch (error) {
+                console.error("Error fetching history chart data:", error);
+                showError("spendingLineChartContainer", "Error loading data. Please try again.");
+            }
+        };
+
+        document
+            .getElementById("category-trip-filter")
+            .addEventListener("change", updateCategoryMonthFilter);
+        document
+            .getElementById("category-month-filter")
+            .addEventListener("change", updateCategoryChart);
+        document
+            .getElementById("history-month-filter")
+            .addEventListener("change", updateHistoryChart);
+
+        // Initial chart load from server-rendered data
+        const initialCategoryData = {
+            category_labels: {{ category_labels|tojson|safe }},
+            category_values: {{ category_values|tojson|safe }}
+        };
+        initOrUpdateCategoryChart(initialCategoryData);
+
+        const initialSpendingData = {
+            line_chart_labels: {{ line_chart_labels|tojson|safe }},
+            line_chart_values: {{ line_chart_values|tojson|safe }}
+        };
+        initOrUpdateSpendingChart(initialSpendingData);
     });
 </script>
 {% endblock %}

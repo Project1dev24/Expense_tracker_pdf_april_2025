@@ -36,7 +36,7 @@ class User(UserMixin, db.Model):
         from .trip import Trip
         admin_trips = Trip.query.filter_by(admin_id=self.id).all()
         # Find trips where user is a participant (stored in JSON field)
-        participant_trips = Trip.query.filter(Trip.participants.contains(str(self.id))).all()
+        participant_trips = Trip.query.filter(Trip.participants.contains(f'"{self.id}"')).all()
         # Combine and remove duplicates
         all_trips = list(set(admin_trips + participant_trips))
         return all_trips
