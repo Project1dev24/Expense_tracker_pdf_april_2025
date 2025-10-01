@@ -958,6 +958,20 @@ body.modal-open {
     background-color: var(--secondary-action-color);
 }
 
+/* Special override for black theme */
+.black-theme-active .trip-view-buttons .btn-primary,
+.black-theme-active .trip-view-buttons .btn-warning {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+}
+
+.black-theme-active .trip-view-buttons a.btn-primary:hover,
+.black-theme-active .trip-view-buttons button.btn-warning:hover,
+.black-theme-active .trip-view-buttons button.dropdown-toggle:hover {
+    background-color: #BDBDBD !important; /* Darker gray for hover */
+}
+
 /* Added comprehensive styles for btn-outline-primary to maintain theme colors */
 .trip-view-buttons .btn-outline-primary {
     color: var(--theme-accent-color);

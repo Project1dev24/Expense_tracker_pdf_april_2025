@@ -41,8 +41,8 @@ Tracker{% endblock %} {% block styles %}
     }
 
     .btn:hover {
-        transform: translate(-2px, -2px);
-        box-shadow: 5px 5px 0px var(--border-color);
+        /* transform: translate(-2px, -2px); */
+        /* box-shadow: 5px 5px 0px var(--border-color); */
     }
 
     .btn:active {
@@ -57,15 +57,20 @@ Tracker{% endblock %} {% block styles %}
     }
     .btn-primary:hover,
     .btn-primary:focus,
-    .btn-primary:active,
     a.btn-primary:hover,
     a.btn-primary:focus,
-    a.btn-primary:active,
     .btn-group .btn-primary:hover,
     .btn-group .btn-primary:focus,
-    .btn-group .btn-primary:active,
     .btn-group a.btn-primary:hover,
-    .btn-group a.btn-primary:focus,
+    .btn-group a.btn-primary:focus {
+        color: var(--theme-contrast-color) !important;
+        background-color: var(--secondary-action-color) !important; /* Darker hover effect */
+        border-color: var(--border-color) !important;
+    }
+
+    .btn-primary:active,
+    a.btn-primary:active,
+    .btn-group .btn-primary:active,
     .btn-group a.btn-primary:active {
         color: var(--theme-contrast-color) !important;
         background-color: var(--theme-accent-color) !important;
@@ -86,12 +91,10 @@ Tracker{% endblock %} {% block styles %}
     /* All possible states for btn-outline-primary */
     .btn-outline-primary:hover,
     .btn-outline-primary:focus,
-    .btn-outline-primary:active,
     .btn-outline-primary.active,
     .btn-outline-primary.dropdown-toggle.show,
     a.btn-outline-primary:hover,
     a.btn-outline-primary:focus,
-    a.btn-outline-primary:active,
     a.btn-outline-primary.active,
     a.btn-outline-primary.dropdown-toggle.show,
     .btn-group .btn-outline-primary:hover,
@@ -125,7 +128,7 @@ Tracker{% endblock %} {% block styles %}
     .w-100 a.btn-outline-primary.active,
     .w-100 a.btn-outline-primary.dropdown-toggle.show {
         color: var(--theme-contrast-color) !important;
-        background-color: var(--theme-accent-color) !important;
+        background-color: var(--secondary-action-color) !important;
         border-color: var(--border-color) !important;
     }
 
@@ -193,13 +196,10 @@ Tracker{% endblock %} {% block styles %}
                 <i class="fas fa-list me-2"></i>
                 <span class="d-none d-md-inline">Expenses</span>
             </a>
-            <a
-                href="{{ url_for('expenses.add_expense', trip_id=trip.id) }}"
-                class="btn btn-primary"
-            >
-                <i class="fas fa-plus me-2"></i>
-                <span class="d-none d-md-inline">Add Expense</span>
-            </a>
+        <a href="{{ url_for('expenses.add_expense', trip_id=trip.id) }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            <span class="d-none d-md-inline ms-2">New Expense</span>
+        </a>
             {% if trip.admin_id == current_user.id %}
             <form
                 action="{{ url_for('trips.sync_trip_balances', trip_id=trip.id) }}"
@@ -210,6 +210,8 @@ Tracker{% endblock %} {% block styles %}
                     type="submit"
                     class="btn btn-warning"
                     title="Recalculate all balances"
+                    onmouseover="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#BDBDBD'; this.style.color='#000000'; }"
+                    onmouseout="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#FFFFFF'; this.style.color='#000000'; }"
                 >
                     <i class="fas fa-sync-alt me-2"></i>
                     <span class="d-none d-lg-inline">Sync</span>
@@ -221,6 +223,8 @@ Tracker{% endblock %} {% block styles %}
                 class="btn btn-primary dropdown-toggle dropdown-toggle-split"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
+                onmouseover="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#BDBDBD'; this.style.color='#000000'; }"
+                onmouseout="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#FFFFFF'; this.style.color='#000000'; }"
             >
                 <span class="visually-hidden">Toggle Dropdown</span>
             </button>
@@ -470,8 +474,11 @@ Tracker{% endblock %} {% block styles %}
             <a
                 href="{{ url_for('expenses.add_expense', trip_id=trip.id) }}"
                 class="btn btn-primary"
+                onmouseover="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#BDBDBD'; this.style.color='#000000'; }"
+                onmouseout="if(document.body.classList.contains('black-theme-active')) { this.style.backgroundColor='#FFFFFF'; this.style.color='#000000'; }"
             >
-                <i class="fas fa-plus me-2"></i>Add Expense
+                <i class="fas fa-plus me-2"></i>
+                <span class="d-none d-md-inline">Add Expense</span>
             </a>
         </div>
         {% endif %}
