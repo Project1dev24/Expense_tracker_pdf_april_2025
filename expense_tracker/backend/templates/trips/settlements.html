@@ -195,6 +195,19 @@ Trip Expense Tracker{% endblock %} {% block styles %}
         padding: 1rem;
         flex-grow: 1;
     }
+
+    .trip-name-badge {
+        font-size: 1rem;
+        padding: 0.3em 0.6em;
+        border: var(--border-width) solid transparent; /* Add transparent border for consistency */
+                    transition: all 0.15s ease-out; /* Add transition for smooth effect */
+                    background-color: var(--theme-accent-color);        color: var(--theme-contrast-color);
+    }
+    .trip-name-badge:hover {
+        background-color: var(--secondary-action-color) !important;
+        color: var(--theme-contrast-color) !important;
+        border-color: var(--border-color) !important;
+    }
 </style>
 {% endblock %} {% block content %}
 <div class="row mb-4">
@@ -202,6 +215,7 @@ Trip Expense Tracker{% endblock %} {% block styles %}
         <h1 class="mb-2">Settlements</h1>
         <p class="text-muted">
             <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}"
+                class="badge text-decoration-none trip-name-badge"
                 >{{ trip.name }}</a
             >
             <i class="fas fa-calendar ms-3 me-1"></i>
