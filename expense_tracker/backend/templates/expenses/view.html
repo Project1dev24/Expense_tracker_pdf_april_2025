@@ -125,10 +125,27 @@ Expense Tracker{% endblock %} {% block styles %}
         padding: 1rem;
         flex-grow: 1;
     }
+
+    @media (max-width: 767px) {
+        .btn-group-proportional {
+            display: flex;
+            width: 100%;
+        }
+        .btn-group-proportional > .btn:not(.dropdown-toggle-split) {
+            flex-grow: 3;
+            /* Ensure text and icon are centered */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-group-proportional > .dropdown-toggle-split {
+            flex-grow: 1;
+        }
+    }
 </style>
 {% endblock %} {% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
+<div class="row">
+    <div class="col-12">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
@@ -148,13 +165,17 @@ Expense Tracker{% endblock %} {% block styles %}
             </ol>
         </nav>
         <h1 class="mb-2">{{ expense.description }}</h1>
-        <p class="text-muted">
+    </div>
+</div>
+<div class="row mb-4 align-items-center">
+    <div class="col-6 col-md-8">
+        <p class="text-muted mb-0">
             <i class="fas fa-calendar me-1"></i>
             {{ expense.date.strftime('%d %b %Y') }}
         </p>
     </div>
-    <div class="col-md-4 text-end">
-        <div class="btn-group">
+    <div class="col-6 col-md-4 text-end">
+        <div class="btn-group btn-group-proportional">
             {% if expense.payer_id == current_user.id or trip.admin_id ==
             current_user.id %}
             <a
