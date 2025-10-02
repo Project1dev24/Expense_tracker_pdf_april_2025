@@ -41,8 +41,7 @@ Expense Tracker{% endblock %} {% block styles %}
     }
 
     .btn:hover {
-        transform: translate(-2px, -2px);
-        box-shadow: 5px 5px 0px var(--border-color);
+        /* No specific hover transform/shadow */
     }
 
     .btn:active {
@@ -57,9 +56,13 @@ Expense Tracker{% endblock %} {% block styles %}
     }
     .btn-primary:hover,
     .btn-primary:focus,
-    .btn-primary:active,
     a.btn-primary:hover,
-    a.btn-primary:focus,
+    a.btn-primary:focus {
+        color: var(--theme-contrast-color) !important;
+        background-color: var(--secondary-action-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    .btn-primary:active,
     a.btn-primary:active {
         color: var(--theme-contrast-color) !important;
         background-color: var(--theme-accent-color) !important;
@@ -78,9 +81,13 @@ Expense Tracker{% endblock %} {% block styles %}
     }
     .btn-outline-primary:hover,
     .btn-outline-primary:focus,
-    .btn-outline-primary:active,
     a.btn-outline-primary:hover,
-    a.btn-outline-primary:focus,
+    a.btn-outline-primary:focus {
+        color: var(--theme-contrast-color) !important;
+        background-color: var(--secondary-action-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    .btn-outline-primary:active,
     a.btn-outline-primary:active {
         color: var(--theme-contrast-color) !important;
         background-color: var(--theme-accent-color) !important;
