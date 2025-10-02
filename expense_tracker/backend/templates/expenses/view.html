@@ -141,11 +141,28 @@ Expense Tracker{% endblock %} {% block styles %}
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: normal !important; /* Allow text to wrap if needed */
         }
         .btn-group-proportional > .dropdown-toggle-split {
             flex-grow: 1;
         }
+
+        /* Fix for split details table on mobile */
+        .split-details-table {
+            table-layout: fixed;
+            width: 100% !important; /* Ensure table is full width */
         }
+        .split-details-table th:first-child,
+        .split-details-table td:first-child {
+            width: 70%;
+        }
+        .split-details-table th:last-child,
+        .split-details-table td:last-child {
+            width: 30%;
+        }
+    }
 </style>
 {% endblock %} {% block content %}
 <div class="row">
@@ -172,13 +189,13 @@ Expense Tracker{% endblock %} {% block styles %}
     </div>
 </div>
 <div class="row mb-4 align-items-center">
-    <div class="col-6 col-md-8">
+    <div class="col-4 col-md-8">
         <p class="text-muted mb-0">
             <i class="fas fa-calendar me-1"></i>
             {{ expense.date.strftime('%d %b %Y') }}
         </p>
     </div>
-    <div class="col-6 col-md-4 text-end">
+    <div class="col-8 col-md-4 text-end">
         <div class="btn-group btn-group-proportional">
             {% if expense.payer_id == current_user.id or trip.admin_id ==
             current_user.id %}
@@ -309,7 +326,7 @@ Expense Tracker{% endblock %} {% block styles %}
                     participants. {% endif %}
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-bordered">
+                    <table class="table table-bordered split-details-table">
                         <thead class="table-light">
                             <tr>
                                 <th>Participant</th>
@@ -355,7 +372,7 @@ Expense Tracker{% endblock %} {% block styles %}
                     participant.
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-bordered">
+                    <table class="table table-bordered split-details-table">
                         <thead class="table-light">
                             <tr>
                                 <th>Participant</th>
