@@ -10,6 +10,12 @@ Expense Tracker{% endblock %} {% block styles %}
         --secondary-action-color: #85a0aa; /* Default: Darkened Pastel Blue */
         --border-width: 2px;
         --shadow-offset: 5px;
+        --breadcrumb-bg: #e9ecef;
+        --breadcrumb-hover-bg: #d1d1d1;
+        --breadcrumb-inactive-bg: #dde0e3;
+        --breadcrumb-active-color: #495057;
+        --breadcrumb-font-size: 0.95rem;
+        --breadcrumb-padding: 0.25rem 0.5rem;
     }
 
     body {
@@ -41,7 +47,8 @@ Expense Tracker{% endblock %} {% block styles %}
     }
 
     .btn:hover {
-        /* No specific hover transform/shadow */
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0px var(--border-color);
     }
 
     .btn:active {
@@ -56,13 +63,9 @@ Expense Tracker{% endblock %} {% block styles %}
     }
     .btn-primary:hover,
     .btn-primary:focus,
-    a.btn-primary:hover,
-    a.btn-primary:focus {
-        color: var(--theme-contrast-color) !important;
-        background-color: var(--secondary-action-color) !important;
-        border-color: var(--border-color) !important;
-    }
     .btn-primary:active,
+    a.btn-primary:hover,
+    a.btn-primary:focus,
     a.btn-primary:active {
         color: var(--theme-contrast-color) !important;
         background-color: var(--theme-accent-color) !important;
@@ -81,13 +84,9 @@ Expense Tracker{% endblock %} {% block styles %}
     }
     .btn-outline-primary:hover,
     .btn-outline-primary:focus,
-    a.btn-outline-primary:hover,
-    a.btn-outline-primary:focus {
-        color: var(--theme-contrast-color) !important;
-        background-color: var(--secondary-action-color) !important;
-        border-color: var(--border-color) !important;
-    }
     .btn-outline-primary:active,
+    a.btn-outline-primary:hover,
+    a.btn-outline-primary:focus,
     a.btn-outline-primary:active {
         color: var(--theme-contrast-color) !important;
         background-color: var(--theme-accent-color) !important;
@@ -137,6 +136,92 @@ Expense Tracker{% endblock %} {% block styles %}
         color: var(--border-color) !important;
     }
 
+    /* Breadcrumb styling with background and hover effects */
+    .breadcrumb {
+        background-color: var(--breadcrumb-bg);
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: var(--breadcrumb-font-size);
+        display: flex;
+        align-items: center;
+        list-style: none;
+    }
+
+    .breadcrumb-item {
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+        font-size: var(--breadcrumb-font-size);
+        line-height: 1.5;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: ">";
+        color: var(--breadcrumb-active-color);
+        padding: 0 0.5rem;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .breadcrumb-item a {
+        color: var(--theme-accent-color);
+        text-decoration: none;
+        padding: var(--breadcrumb-padding);
+        border-radius: 0.25rem;
+        transition: all 0.2s ease-in-out;
+        background-color: var(--breadcrumb-inactive-bg);
+        font-size: var(--breadcrumb-font-size);
+        display: inline-flex;
+        align-items: center;
+        line-height: 1.5;
+        font-weight: 500; /* Light bold for all items except active */
+    }
+
+    .breadcrumb-item a:hover {
+        background-color: var(--breadcrumb-hover-bg);
+        color: var(--breadcrumb-active-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--breadcrumb-active-color);
+        font-weight: 600; /* Regular bold for active item */
+        padding: var(--breadcrumb-padding);
+        font-size: var(--breadcrumb-font-size);
+        display: inline-flex;
+        align-items: center;
+        line-height: 1.5;
+    }
+
+    /* Fix for table responsiveness on mobile */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0;
+        padding: 0;
+    }
+
+    .split-details-table {
+        width: 100%;
+        margin-bottom: 1rem;
+        table-layout: fixed;
+        border-collapse: collapse;
+    }
+
+    .split-details-table th:first-child,
+    .split-details-table td:first-child {
+        width: 70%;
+        text-align: left;
+    }
+
+    .split-details-table th:last-child,
+    .split-details-table td:last-child {
+        width: 30%;
+        text-align: right;
+    }
+
     @media (max-width: 767px) {
         .btn-group-proportional {
             display: flex;
@@ -148,9 +233,6 @@ Expense Tracker{% endblock %} {% block styles %}
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            overflow: visible !important;
-            text-overflow: clip !important;
-            white-space: normal !important; /* Allow text to wrap if needed */
         }
         .btn-group-proportional > .dropdown-toggle-split {
             flex-grow: 1;
@@ -167,7 +249,59 @@ Expense Tracker{% endblock %} {% block styles %}
         }
         .split-details-table th:last-child,
         .split-details-table td:last-child {
-            width: 30%;
+            width: 35%;
+        }
+        
+        .table-responsive {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-y: hidden;
+            -ms-overflow-style: -ms-autohiding-scrollbar;
+            border: none;
+        }
+        
+        /* Fix for right gap issue - remove panel padding for table */
+        .panel-body > .table-responsive {
+            margin: 0 -1rem;
+        }
+        
+        .panel-body > .table-responsive > .split-details-table {
+            margin-bottom: 0;
+        }
+        
+        /* Adjust breadcrumb for mobile */
+        .breadcrumb {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+        
+        .breadcrumb-item,
+        .breadcrumb-item a,
+        .breadcrumb-item.active {
+            font-size: 0.9rem;
+        }
+    }
+    
+    /* Additional fix for right gap issue on small screens */
+    @media (max-width: 575px) {
+        .panel-body {
+            padding: 1rem 0.75rem;
+        }
+        
+        .panel-body > .table-responsive {
+            margin: 0 -0.75rem;
+        }
+        
+        .breadcrumb {
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .breadcrumb-item a,
+        .breadcrumb-item.active {
+            padding: 0.25rem;
+            font-size: 0.85rem;
         }
     }
 </style>
