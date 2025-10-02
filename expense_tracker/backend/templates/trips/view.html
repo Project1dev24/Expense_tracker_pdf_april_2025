@@ -786,6 +786,14 @@ Tracker{% endblock %} {% block styles %}
             margin-right: 0.25rem !important;
         }
     }
+
+    /* Attempt to disable text truncation on action buttons */
+    @media (max-width: 767px) {
+        #expenses .btn-group-sm .btn {
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+    }
 </style>
 {% endblock %} {% block content %}
 <div class="row mb-4">
