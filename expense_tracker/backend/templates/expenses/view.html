@@ -126,6 +126,10 @@ Expense Tracker{% endblock %} {% block styles %}
         flex-grow: 1;
     }
 
+    .expense-amount-display {
+        color: var(--border-color) !important;
+    }
+
     @media (max-width: 767px) {
         .btn-group-proportional {
             display: flex;
@@ -141,7 +145,7 @@ Expense Tracker{% endblock %} {% block styles %}
         .btn-group-proportional > .dropdown-toggle-split {
             flex-grow: 1;
         }
-    }
+        }
 </style>
 {% endblock %} {% block content %}
 <div class="row">
@@ -220,7 +224,7 @@ Expense Tracker{% endblock %} {% block styles %}
                         <strong>Amount:</strong>
                     </div>
                     <div class="col-md-8">
-                        <h4 class="text-primary">
+                        <h4 class="text-primary expense-amount-display">
                             ₹{{ expense.amount|round(2) }}
                         </h4>
                     </div>
