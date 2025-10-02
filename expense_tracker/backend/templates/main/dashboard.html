@@ -9,7 +9,7 @@ endblock %} {% block content %}
         </p>
     </div>
     <div class="d-flex align-items-center">
-        <a href="#" class="btn btn-secondary d-flex align-items-center me-2">
+        <a href="#" class="btn btn-secondary d-flex align-items-center me-2" id="syncBtn">
             <i class="fas fa-sync"></i>
             <span class="d-none d-md-inline ms-2">Sync</span>
         </a>
@@ -237,9 +237,9 @@ endblock %} {% block content %}
             </div>
             <div class="chart-filters">
                 <select id="category-trip-filter" class="form-select">
-                    <option value="all">All Trips</option>
+                    <option value="all" selected>All Trips</option>
                     {% for trip in trips %}
-                    <option value="{{ trip.id }}" {% if loop.first %}selected{% endif %}>{{ trip.name }}</option>
+                    <option value="{{ trip.id }}">{{ trip.name }}</option>
                     {% endfor %}
                 </select>
                 <select id="category-month-filter" class="form-select">
@@ -268,9 +268,9 @@ endblock %} {% block content %}
             </div>
             <div class="chart-filters">
                 <select id="history-month-filter" class="form-select">
-                    <option value="all">All Time</option>
+                    <option value="all" selected>All Time</option>
                     {% for month in months_for_filter %}
-                    <option value="{{ month.value }}" {% if loop.first %}selected{% endif %}>{{ month.text }}</option>
+                    <option value="{{ month.value }}">{{ month.text }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -719,6 +719,82 @@ endblock %} {% block content %}
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // Sync button functionality
+        const syncBtn = document.getElementById("syncBtn");
+        if (syncBtn) {
+            syncBtn.addEventListener("click", async function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                const originalHTML = syncBtn.innerHTML;
+                syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span class="d-none d-md-inline ms-2">Syncing...</span>';
+                syncBtn.classList.add("disabled");
+                
+                try {
+                    const response = await fetch("/api/sync", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        credentials: "same-origin"
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Show success message
+                        showAlert("success", data.message);
+                        
+                        // Refresh the page to show updated data
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        // Show error message
+                        showAlert("danger", data.message || "Sync failed. Please try again.");
+                    }
+                } catch (error) {
+                    console.error("Sync error:", error);
+                    showAlert("danger", "An error occurred during sync. Please try again.");
+                } finally {
+                    // Restore button state
+                    setTimeout(() => {
+                        syncBtn.innerHTML = originalHTML;
+                        syncBtn.classList.remove("disabled");
+                    }, 1500);
+                }
+            });
+        }
+        
+        // Function to show alert messages
+        function showAlert(type, message) {
+            // Remove any existing alerts
+            const existingAlert = document.querySelector(".sync-alert");
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            
+            // Create new alert
+            const alertDiv = document.createElement("div");
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show sync-alert position-fixed top-0 end-0 m-3`;
+            alertDiv.style.zIndex = "9999";
+            alertDiv.role = "alert";
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // Add to body
+            document.body.appendChild(alertDiv);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+        
         // Carousel
         const emblaNode = document.querySelector(
             "#tripsCarousel .embla__viewport",

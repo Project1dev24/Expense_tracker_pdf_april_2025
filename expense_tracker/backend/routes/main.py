@@ -263,34 +263,46 @@ def api_spending_history():
     expenses = base_query.all()
     spending_data_map = {}
 
-    if month and start_date and end_date:  # If month is selected, show daily spending
-        date_format_str = "%Y-%m-%d"
+    if month and start_date and end_date:  # If month is selected, show weekly spending
+        # Group expenses by week
+        weekly_spending = {}
+        
         for expense in expenses:
             shares = expense.get_shares()
             user_share = shares.get(str(current_user.id))
             if user_share:
-                day = expense.date.strftime(date_format_str)
-                if day not in spending_data_map:
-                    spending_data_map[day] = 0
-                spending_data_map[day] += user_share
+                # Calculate week number (1-5) within the month
+                day_of_month = expense.date.day
+                week_number = ((day_of_month - 1) // 7) + 1
+                
+                # Create a label for the week (e.g., "Sep 1-7")
+                week_start = ((week_number - 1) * 7) + 1
+                week_end = min(week_number * 7, end_date.day)
+                
+                # Format the label with actual dates
+                week_label = f"{start_date.strftime('%b')} {week_start}-{week_end}"
+                
+                if week_label not in weekly_spending:
+                    weekly_spending[week_label] = 0
+                weekly_spending[week_label] += user_share
 
-        if spending_data_map:
-            min_date_str = min(spending_data_map.keys())
-            max_date_str = max(spending_data_map.keys())
-            min_date = datetime.strptime(min_date_str, "%Y-%m-%d").date()
-            max_date = datetime.strptime(max_date_str, "%Y-%m-%d").date()
-
-            # If month is selected, use the month's start and end for the x-axis
-            line_chart_labels = [
-                (start_date.date() + timedelta(days=i)).strftime(date_format_str)
-                for i in range((end_date.date() - start_date.date()).days + 1)
-            ]
-            line_chart_values = [
-                spending_data_map.get(day, 0) for day in line_chart_labels
-            ]
-        else:
-            line_chart_labels = []
-            line_chart_values = []
+        # Create sorted labels and values
+        line_chart_labels = []
+        line_chart_values = []
+        
+        # Create week labels in order (1st through 5th week)
+        week_labels = []
+        for week_num in range(1, 6):  # Weeks 1-5
+            week_start = ((week_num - 1) * 7) + 1
+            if week_start <= end_date.day:
+                week_end = min(week_num * 7, end_date.day)
+                week_label = f"{start_date.strftime('%b')} {week_start}-{week_end}"
+                week_labels.append(week_label)
+        
+        # Now populate the chart data in week order
+        for week_label in week_labels:
+            line_chart_labels.append(week_label)
+            line_chart_values.append(weekly_spending.get(week_label, 0))
 
     else:  # If no filters, show monthly spending for last 12 months across all trips
         date_format_str = "%Y-%m"
@@ -452,3 +464,39 @@ def api_dashboard_data():
             "line_chart_values": line_chart_values,
         }
     )
+
+
+@bp.route("/api/sync", methods=["POST"])
+@login_required
+def api_sync():
+    """API endpoint to manually sync/refresh all user data and balances"""
+    try:
+        # Get all trips for the user
+        user_trips = current_user.get_trips()
+        
+        # Recalculate balances for each trip
+        sync_count = 0
+        for trip in user_trips:
+            try:
+                # Recalculate all balances for this trip
+                balances = trip.recalculate_all_balances()
+                sync_count += 1
+            except Exception as e:
+                print(f"Error syncing trip {trip.id}: {str(e)}")
+                # Continue with other trips even if one fails
+        
+        # Update user's last seen timestamp
+        current_user.update_last_seen()
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Successfully synchronized {sync_count} trips", 
+            "sync_count": sync_count
+        })
+        
+    except Exception as e:
+        print(f"Error during synchronization: {str(e)}")
+        return jsonify({
+            "success": False, 
+            "message": f"Error during synchronization: {str(e)}"
+        }), 500
