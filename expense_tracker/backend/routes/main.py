@@ -1,4 +1,3 @@
-from sqlalchemy import func
 from flask import Blueprint, render_template, redirect, url_for, jsonify, request
 from flask_login import current_user, login_required
 from datetime import date, timedelta, datetime
@@ -84,10 +83,10 @@ def dashboard():
     months_for_filter = []
     if trip_ids:
         distinct_months = (
-            db.session.query(func.strftime("%Y-%m", Expense.date))
+            db.session.query(db.func.strftime("%Y-%m", Expense.date))
             .filter(Expense.trip_id.in_(trip_ids))
             .distinct()
-            .order_by(func.strftime("%Y-%m", Expense.date).desc())
+            .order_by(db.func.strftime("%Y-%m", Expense.date).desc())
             .all()
         )
 
@@ -184,10 +183,10 @@ def api_months_for_trip(trip_id):
         return jsonify({"error": "Unauthorized"}), 403
 
     distinct_months = (
-        db.session.query(func.strftime("%Y-%m", Expense.date))
+        db.session.query(db.func.strftime("%Y-%m", Expense.date))
         .filter(Expense.trip_id == trip_id)
         .distinct()
-        .order_by(func.strftime("%Y-%m", Expense.date).desc())
+        .order_by(db.func.strftime("%Y-%m", Expense.date).desc())
         .all()
     )
 
@@ -210,10 +209,10 @@ def api_all_months():
         return jsonify([])
 
     distinct_months = (
-        db.session.query(func.strftime("%Y-%m", Expense.date))
+        db.session.query(db.func.strftime("%Y-%m", Expense.date))
         .filter(Expense.trip_id.in_(trip_ids))
         .distinct()
-        .order_by(func.strftime("%Y-%m", Expense.date).desc())
+        .order_by(db.func.strftime("%Y-%m", Expense.date).desc())
         .all()
     )
 
