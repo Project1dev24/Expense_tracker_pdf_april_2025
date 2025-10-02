@@ -128,6 +128,30 @@ endblock %} {% block styles %}
         box-shadow: 0 0 0 0.25rem rgba(174, 198, 207, 0.25) !important;
     }
 
+    /* Custom styles for text prominence */
+    .form-label {
+        color: var(--border-color) !important; /* Make text darker */
+        font-size: 1.125rem !important; /* Increase font size by 2px (from 16px to 18px) */
+        font-weight: 600 !important; /* Make text semi-bold */
+    }
+
+    .split-method-description {
+        color: var(--border-color) !important;
+        font-size: 1.005rem !important; /* Less font size */
+        font-weight: 400 !important; /* Bold */
+    }
+
+    .split-method-description strong {
+        font-weight: 700 !important; /* Medium bold, less than 600 */
+    }
+
+    /* Remove hover effect from card elements */
+    .card:hover {
+        box-shadow: none !important;
+        transform: none !important;
+        background-color: initial !important;
+    }
+
     .btn-secondary {
         background-color: var(--secondary-action-color);
         color: var(--theme-contrast-color);
@@ -161,6 +185,12 @@ endblock %} {% block styles %}
     .panel-body {
         padding: 1rem;
         flex-grow: 1;
+    }
+
+    .panel-footer {
+        padding: 0.75rem 1.25rem;
+        border-top: var(--border-width) solid var(--border-color);
+        background-color: var(--panel-bg);
     }
 </style>
 {% endblock %} {% block content %}
@@ -289,7 +319,7 @@ endblock %} {% block styles %}
                                 {% endif %}
                             </select>
                             <div class="form-text">
-                                <small>Select who paid for this expense</small>
+                                <strong>Select who paid for this expense</strong>
                             </div>
 
                             <!-- Warning for Everyone payment option -->
@@ -327,7 +357,7 @@ endblock %} {% block styles %}
                                     Itemized
                                 </option>
                             </select>
-                            <div class="form-text">
+                            <div class="form-text split-method-description">
                                 <small>
                                     <strong>Equal:</strong> Split equally among
                                     selected participants<br />
@@ -432,10 +462,17 @@ endblock %} {% block styles %}
                         class="split-section mb-4"
 {% if expense.split_method != "equal" %}style="display: none;"{% endif %}
                     >
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            The amount will be split equally among all selected
-                            participants.
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h5 class="mb-0">Equal Split Details</h5>
+                            </div>
+                            <div class="panel-body">
+                                <div class="alert alert-info mb-0"> <!-- mb-0 to remove margin -->
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    The amount will be split equally among all selected
+                                    participants.
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -454,7 +491,7 @@ endblock %} {% block styles %}
                         <div id="exactSplitParticipants">
                             <!-- Will be populated by JavaScript -->
                         </div>
-                        <div class="d-flex justify-content-between mt-2">
+                        <div class="panel-footer d-flex justify-content-between mt-2">
                             <span
                                 >Total: ₹<span id="exactSplitTotal"
                                     >0.00</span
@@ -542,7 +579,7 @@ endblock %} {% block styles %}
                         </template>
 
                         <div
-                            class="d-flex justify-content-between align-items-center"
+                            class="panel-footer d-flex justify-content-between align-items-center"
                         >
                             <button
                                 type="button"
