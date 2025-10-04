@@ -1,2 +1,6 @@
 archive/test_sync_endpoint.py
 archive/test_sync_implementation.py
+.supabase
+node_modules
+.idea
+</import>

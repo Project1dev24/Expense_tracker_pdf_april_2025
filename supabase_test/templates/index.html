@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 text-center">
+        <h1>Supabase Authentication Test</h1>
+        <p class="lead">This is a standalone test for Supabase authentication flows.</p>
+        
+        {% if not session.user %}
+            <div class="row mt-5">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h4>Traditional Authentication</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>Register or login with email and password</p>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('register') }}" class="btn btn-primary">Register with Password</a>
+                                <a href="{{ url_for('login') }}" class="btn btn-outline-primary">Login with Password</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-success text-white">
+                            <h4>Passwordless Authentication</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>Register or login with magic links sent to your email</p>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('register_magic_link') }}" class="btn btn-success">Register with Magic Link</a>
+                                <a href="{{ url_for('login_magic_link') }}" class="btn btn-outline-success">Login with Magic Link</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <h5>How it works:</h5>
+                <ul class="text-start">
+                    <li><strong>Traditional:</strong> Register with email/password, confirm email, then login with email/password</li>
+                    <li><strong>Passwordless:</strong> Register or login by receiving a magic link via email</li>
+                </ul>
+            </div>
+        {% else %}
+            <div class="mt-5">
+                <h3>Welcome, {{ session.user.email }}!</h3>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">Logout</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

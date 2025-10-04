@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Expense - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Edit Expense</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" name="description" value="{{ expense.description }}" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="amount" class="form-label">Amount (₹)</label>
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" value="{{ expense.amount }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="currency" class="form-label">Currency</label>
+                                <select class="form-control" id="currency" name="currency">
+                                    <option value="INR" {% if expense.currency == 'INR' %}selected{% endif %}>INR</option>
+                                    <option value="USD" {% if expense.currency == 'USD' %}selected{% endif %}>USD</option>
+                                    <option value="EUR" {% if expense.currency == 'EUR' %}selected{% endif %}>EUR</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-control" id="category" name="category">
+                                <option value="">Select Category</option>
+                                <option value="Food" {% if expense.category == 'Food' %}selected{% endif %}>Food</option>
+                                <option value="Transportation" {% if expense.category == 'Transportation' %}selected{% endif %}>Transportation</option>
+                                <option value="Accommodation" {% if expense.category == 'Accommodation' %}selected{% endif %}>Accommodation</option>
+                                <option value="Entertainment" {% if expense.category == 'Entertainment' %}selected{% endif %}>Entertainment</option>
+                                <option value="Shopping" {% if expense.category == 'Shopping' %}selected{% endif %}>Shopping</option>
+                                <option value="Other" {% if expense.category == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="date" name="date" value="{{ expense.date.strftime('%Y-%m-%d') }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="payer_id" class="form-label">Paid By</label>
+                                <select class="form-control" id="payer_id" name="payer_id" required>
+                                    <option value="{{ user.id }}" {% if expense.payer_id == user.id %}selected{% endif %}>You</option>
+                                    {% for participant in trip.participants %}
+                                    <option value="{{ participant }}" {% if expense.payer_id == participant %}selected{% endif %}>Participant {{ participant }}</option>
+                                    {% endfor %}
+                                    {% for unregistered in unregistered_participants %}
+                                    <option value="unregistered_{{ unregistered.name }}" {% if expense.payer_id == 'unregistered_' + unregistered.name %}selected{% endif %}>{{ unregistered.name|title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="split_method" class="form-label">Split Method</label>
+                            <select class="form-control" id="split_method" name="split_method">
+                                <option value="equal" {% if expense.split_method == 'equal' %}selected{% endif %}>Equal Split</option>
+                                <option value="exact" {% if expense.split_method == 'exact' %}selected{% endif %}>Exact Amounts</option>
+                                <option value="itemized" {% if expense.split_method == 'itemized' %}selected{% endif %}>Itemized</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Participants</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="participant_{{ user.id }}" name="participants" value="{{ user.id }}" {% if user.id in expense.participants %}checked{% endif %}>
+                                <label class="form-check-label" for="participant_{{ user.id }}">You</label>
+                            </div>
+                            {% for participant in trip.participants %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="participant_{{ participant }}" name="participants" value="{{ participant }}" {% if participant in expense.participants %}checked{% endif %}>
+                                <label class="form-check-label" for="participant_{{ participant }}">Participant {{ participant }}</label>
+                            </div>
+                            {% endfor %}
+                            {% for unregistered in unregistered_participants %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="unregistered_{{ unregistered.name }}" name="unregistered_participants" value="{{ unregistered.name }}" {% if 'unregistered_' + unregistered.name in expense.shares %}checked{% endif %}>
+                                <label class="form-check-label" for="unregistered_{{ unregistered.name }}">{{ unregistered.name|title }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Update Expense</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

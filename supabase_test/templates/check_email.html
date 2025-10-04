@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Check Your Email - Supabase Auth Test{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Check Your Email</h3>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-envelope-open-text fa-3x text-primary"></i>
+                </div>
+                
+                <h4>We've sent an email to:</h4>
+                <p class="lead"><strong>{{ email }}</strong></p>
+                
+                <div class="alert alert-info">
+                    <h5>What to do next:</h5>
+                    <p>Please check your inbox (and spam folder) for an email from Supabase.</p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5>For Registration</h5>
+                                <p>Click the <strong>confirmation link</strong> in the email to verify your account.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5>For Login</h5>
+                                <p>Click the <strong>magic link</strong> in the email to log in automatically.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary">Back to Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

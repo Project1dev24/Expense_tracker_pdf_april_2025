@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Supabase Auth Test{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Dashboard</h3>
+            </div>
+            <div class="card-body">
+                <h4>Welcome, {{ user.email or user.phone }}!</h4>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>User Information</h5>
+                                <p><strong>User ID:</strong> {{ user.id }}</p>
+                                {% if user.email %}
+                                <p><strong>Email:</strong> {{ user.email }}</p>
+                                {% endif %}
+                                {% if user.phone %}
+                                <p><strong>Phone:</strong> {{ user.phone }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Authentication Status</h5>
+                                <p>You are successfully logged in!</p>
+                                <p><a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

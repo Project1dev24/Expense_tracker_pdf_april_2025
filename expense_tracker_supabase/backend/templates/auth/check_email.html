@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Check Your Email - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Check Your Email</h3>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-envelope fa-3x mb-3 text-primary"></i>
+                <p>We've sent a magic link to <strong>{{ email }}</strong>.</p>
+                <p>Please check your email and click the link to continue.</p>
+                <p>If you don't see the email, check your spam folder.</p>
+                <div class="mt-4">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Back to Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

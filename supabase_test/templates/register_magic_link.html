@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Register with Magic Link - Supabase Auth Test{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Register with Magic Link</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-center text-muted">Register without a password. We'll send you a magic link to confirm your email.</p>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Send Magic Link</button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p>Prefer to register with password? <a href="{{ url_for('register') }}">Register with Password</a></p>
+                    <p>Already have an account? <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('login_magic_link') }}">Login with Magic Link</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

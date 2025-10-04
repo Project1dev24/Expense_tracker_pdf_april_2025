@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Register with Magic Link - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Register with Magic Link</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-center text-muted">We'll send you a magic link to register without a password.</p>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Send Magic Link
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p class="mb-0">
+                        or
+                    </p>
+                </div>
+                
+                <div class="d-grid mt-3">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-2"></i>Register with Password
+                    </a>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <p class="mb-0">
+                        Already have an account?
+                        <a href="{{ url_for('auth.login') }}">Login</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

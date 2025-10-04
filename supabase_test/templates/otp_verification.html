@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}OTP Verification - Supabase Auth Test{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Verify Your Account</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-center">Account: <strong>{{ email }}</strong></p>
+                
+                {% if not otp_sent %}
+                <!-- Send OTP Form -->
+                <div class="mb-4">
+                    <h5 class="text-center">Send Verification Code</h5>
+                    <p class="text-center text-muted">Enter your phone number to receive a verification code via SMS</p>
+                    
+                    <form method="POST">
+                        <input type="hidden" name="action" value="send_otp">
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="+1234567890" required>
+                            <div class="form-text">Enter your phone number with country code</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Send Verification Code</button>
+                        </div>
+                    </form>
+                </div>
+                {% else %}
+                <!-- Verify OTP Form -->
+                <div class="mb-4">
+                    <h5 class="text-center">Enter Verification Code</h5>
+                    <p class="text-center text-muted">We've sent a code to {{ phone }}</p>
+                    
+                    <form method="POST">
+                        <input type="hidden" name="action" value="verify_otp">
+                        <div class="mb-3">
+                            <label for="token" class="form-label">Verification Code</label>
+                            <input type="text" class="form-control" id="token" name="token" placeholder="123456" required maxlength="6">
+                            <div class="form-text">Enter the 6-digit code sent to your phone</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Verify Code</button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <p><a href="{{ url_for('otp_verification') }}">Resend Code</a></p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="text-center mt-3">
+                    <p>Or <a href="{{ url_for('login') }}">login with email/password</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
