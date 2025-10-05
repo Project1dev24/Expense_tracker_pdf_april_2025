@@ -1,38 +1,421 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard - Expense Tracker{% endblock %}
-
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="text-center">Welcome to Your Dashboard</h3>
+{% extends "base.html" %} {% block title %}Dashboard - Expense Tracker{%
+endblock %} {% block content %}
+<div class="space-y-6">
+    <!-- Welcome Section -->
+    <div class="card p-6">
+        <div
+            class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        >
+            <div>
+                <h1 class="text-2xl font-bold">Good to see you again!</h1>
+                <p class="text-gray-600 mt-1">
+                    Welcome back,
+                    <span class="font-semibold">
+                        {% if user.name %} {{ user.name }} {% else %} {{
+                        user.email }} {% endif %}
+                    </span>
+                </p>
             </div>
-            <div class="card-body text-center">
-                <i class="fas fa-user-circle fa-3x mb-3 text-primary"></i>
-                <h4>
-                    Hello, 
-                    {% if user.name %}
-                        {{ user.name }}!
+            <div class="flex space-x-3">
+                <button
+                    id="syncBtn"
+                    onclick="syncExpenses()"
+                    class="btn-secondary flex items-center"
+                >
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    <span>Sync</span>
+                </button>
+                <a
+                    href="{{ url_for('trips.create_trip') }}"
+                    class="btn-primary flex items-center"
+                >
+                    <i class="fas fa-plus mr-2"></i>
+                    <span>New Trip</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Balance Card -->
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">
+                        Total Balance
+                    </p>
+                    <p class="text-2xl font-bold mt-1">
+                        ₹{{ "%.2f"|format(total_balance) if total_balance else
+                        "0.00" }}
+                    </p>
+                </div>
+                <div class="p-3 rounded-lg bg-indigo-500 text-white">
+                    <i class="fas fa-wallet text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                {% if total_balance > 0 %}
+                <p class="text-sm text-green-600">
+                    <i class="fas fa-arrow-up mr-1"></i>
+                    You're owed ₹{{ "%.2f"|format(total_balance) }}
+                </p>
+                {% elif total_balance < 0 %}
+                <p class="text-sm text-red-600">
+                    <i class="fas fa-arrow-down mr-1"></i>
+                    You owe ₹{{ "%.2f"|format(-total_balance) }}
+                </p>
+                {% else %}
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    All settled up
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Total Spent Card -->
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Spent</p>
+                    <p class="text-2xl font-bold mt-1">
+                        ₹{{ "%.2f"|format(total_spent) if total_spent else
+                        "0.00" }}
+                    </p>
+                </div>
+                <div class="p-3 rounded-lg bg-emerald-500 text-white">
+                    <i class="fas fa-receipt text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-suitcase mr-1"></i>
+                    {{ total_trips if total_trips else "0" }} trips
+                </p>
+            </div>
+        </div>
+
+        <!-- Recent Trips Card -->
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">
+                        Recent Trips
+                    </p>
+                    <p class="text-2xl font-bold mt-1">
+                        {{ recent_trips|length if recent_trips else "0" }}
+                    </p>
+                </div>
+                <div class="p-3 rounded-lg bg-amber-500 text-white">
+                    <i class="fas fa-history text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-clock mr-1"></i>
+                    {% if recent_trips %} Last trip: {{
+                    recent_trips[0].start_date.strftime('%b %d') }} {% else %}
+                    No trips yet {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Recent Trips -->
+        <div class="lg:col-span-2 card">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Recent Trips</h2>
+            </div>
+            <div class="p-6">
+                {% if recent_trips %}
+                <div class="space-y-4">
+                    {% for trip in recent_trips[:5] %}
+                    <div
+                        class="flex items-center justify-between p-4 rounded-lg border"
+                    >
+                        <div class="flex items-center">
+                            <div
+                                class="p-3 rounded-lg bg-indigo-500 text-white"
+                            >
+                                <i class="fas fa-suitcase"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="font-medium">{{ trip.name }}</h3>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {{ trip.start_date.strftime('%b %d, %Y') }}
+                                    - {{ trip.end_date.strftime('%b %d, %Y') }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span
+                                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
+                            >
+                                {{ trip.get_participants_list()|length }} people
+                            </span>
+                            <a
+                                href="{{ url_for('trips.view_trip', trip_id=trip.id) }}"
+                                class="text-indigo-600 hover:text-indigo-900"
+                            >
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-6">
+                    <a
+                        href="{{ url_for('trips.list_trips') }}"
+                        class="text-indigo-600 hover:text-indigo-900 font-medium text-sm flex items-center"
+                    >
+                        View all trips
+                        <i class="fas fa-arrow-right ml-1 text-xs"></i>
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-suitcase fa-3x text-gray-300 mb-4"></i>
+                    <h3 class="text-lg font-medium mb-1">No trips yet</h3>
+                    <p class="text-gray-500 mb-6">
+                        Get started by creating your first trip.
+                    </p>
+                    <a
+                        href="{{ url_for('trips.create_trip') }}"
+                        class="btn-primary inline-flex items-center"
+                    >
+                        <i class="fas fa-plus mr-2"></i>
+                        Create Trip
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Activity & Quick Actions -->
+        <div class="space-y-6">
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="p-6 border-b">
+                    <h2 class="text-lg font-semibold">Recent Activity</h2>
+                </div>
+                <div class="p-6">
+                    {% if recent_expenses %}
+                    <div class="space-y-4">
+                        {% for item in recent_expenses[:5] %}
+                        <div class="flex items-start">
+                            <div class="p-2 rounded-lg bg-emerald-100">
+                                <i class="fas fa-receipt text-emerald-600"></i>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <p class="text-sm font-medium truncate">
+                                    {{ item.expense.description }}
+                                </p>
+                                <p class="text-xs text-gray-500 truncate">
+                                    in {{ item.trip.name }}
+                                </p>
+                                <p class_="text-xs text-gray-400 mt-1">
+                                    {{ item.expense.date.strftime('%b %d, %Y')
+                                    }}
+                                </p>
+                            </div>
+                            <div class="ml-2">
+                                <p class="text-sm font-semibold">
+                                    ₹{{ "%.2f"|format(item.expense.amount) }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
-                        {{ user.email }}!
+                    <div class="text-center py-6">
+                        <i class="fas fa-history fa-2x text-gray-300 mb-3"></i>
+                        <p class="text-gray-500 text-sm">No recent activity</p>
+                    </div>
                     {% endif %}
-                </h4>
-                <p>You have successfully logged in.</p>
-                <div class="mt-4">
-                    <a href="{{ url_for('auth.profile') }}" class="btn btn-info me-2">
-                        <i class="fas fa-user-edit me-2"></i>Profile
-                    </a>
-                    <a href="{{ url_for('trips.list_trips') }}" class="btn btn-primary me-2">
-                        <i class="fas fa-suitcase me-2"></i>My Trips
-                    </a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
-                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="p-6 border-b">
+                    <h2 class="text-lg font-semibold">Quick Actions</h2>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-3">
+                        <a
+                            href="{{ url_for('auth.profile') }}"
+                            class="flex items-center p-3 rounded-lg border"
+                        >
+                            <div class="p-2 rounded-lg bg-indigo-100">
+                                <i class="fas fa-user text-indigo-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">
+                                    Update Profile
+                                </p>
+                            </div>
+                            <i
+                                class="fas fa-chevron-right text-gray-400 ml-auto"
+                            ></i>
+                        </a>
+
+                        <a
+                            href="{{ url_for('trips.list_trips') }}"
+                            class="flex items-center p-3 rounded-lg border"
+                        >
+                            <div class="p-2 rounded-lg bg-emerald-100">
+                                <i class="fas fa-list text-emerald-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">
+                                    View All Trips
+                                </p>
+                            </div>
+                            <i
+                                class="fas fa-chevron-right text-gray-400 ml-auto"
+                            ></i>
+                        </a>
+
+                        <button
+                            onclick="syncExpenses()"
+                            class="w-full flex items-center p-3 rounded-lg border"
+                        >
+                            <div class="p-2 rounded-lg bg-amber-100">
+                                <i class="fas fa-sync-alt text-amber-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Sync Expenses</p>
+                            </div>
+                            <i
+                                class="fas fa-chevron-right text-gray-400 ml-auto"
+                            ></i>
+                        </button>
+
+                        <a
+                            href="{{ url_for('auth.logout') }}"
+                            class="flex items-center p-3 rounded-lg border"
+                        >
+                            <div class="p-2 rounded-lg bg-red-100">
+                                <i class="fas fa-sign-out-alt text-red-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Logout</p>
+                            </div>
+                            <i
+                                class="fas fa-chevron-right text-gray-400 ml-auto"
+                            ></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Toast Notifications -->
+<div id="toastContainer" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+<script>
+    function showToast(message, type = 'info') {
+        const toastContainer = document.getElementById('toastContainer');
+
+        const toast = document.createElement('div');
+        toast.className = `flex items-center p-4 rounded-lg shadow-lg transform transition duration-300 ease-in-out translate-x-full max-w-md`;
+
+        let bgColor, icon, textColor;
+        switch (type) {
+            case 'success':
+                bgColor = 'bg-green-100';
+                textColor = 'text-green-800';
+                icon = 'fa-check-circle';
+                break;
+            case 'error':
+                bgColor = 'bg-red-100';
+                textColor = 'text-red-800';
+                icon = 'fa-exclamation-circle';
+                break;
+            case 'warning':
+                bgColor = 'bg-yellow-100';
+                textColor = 'text-yellow-800
+                icon = 'fa-exclamation-triangle';
+                break;
+            default:
+                bgColor = 'bg-blue-100';
+                textColor = 'text-blue-800';
+                icon = 'fa-info-circle';
+        }
+
+        toast.className += ` ${bgColor} ${textColor}`;
+        toast.innerHTML = `
+            <i class="fas ${icon} mr-2"></i>
+            <span class="text-sm">${message}</span>
+            <button onclick="this.parentElement.remove()" class="ml-4 text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        toastContainer.appendChild(toast);
+
+        // Animate in
+        setTimeout(() => {
+            toast.classList.remove('translate-x-full');
+            toast.classList.add('translate-x-0');
+        }, 10);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 300);
+        }, 5000);
+    }
+
+    function syncExpenses() {
+        // Show syncing status
+        const syncBtn = document.getElementById("syncBtn");
+        const originalHTML = syncBtn.innerHTML;
+        syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Syncing...</span>';
+        syncBtn.disabled = true;
+
+        showToast('Syncing expenses...', 'info');
+
+        // Make AJAX request to sync endpoint
+        fetch('/sync-expenses', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Restore button state
+            syncBtn.innerHTML = originalHTML;
+            syncBtn.disabled = false;
+
+            if (data.success) {
+                showToast(data.message || 'Expenses synced successfully!', 'success');
+                // Reload page after a short delay to show updated data
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                showToast('Error syncing expenses: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            // Restore button state
+            syncBtn.innerHTML = originalHTML;
+            syncBtn.disabled = false;
+
+            showToast('Network error. Please try again.', 'error');
+            console.error('Network error:', error);
+        });
+    }
+</script>
 {% endblock %}

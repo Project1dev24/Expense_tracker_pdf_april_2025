@@ -1,45 +1,134 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Create Trip - Expense Tracker{%
+endblock %} {% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Create New Trip</h1>
+        <p class="mt-1 text-sm text-gray-600">
+            Plan your journey and start tracking expenses
+        </p>
+    </div>
 
-{% block title %}Create Trip - Expense Tracker{% endblock %}
+    <div class="card shadow-xl overflow-hidden">
+        <div class="px-6 py-8">
+            <form method="POST" class="space-y-8">
+                <div>
+                    <label for="name" class="block text-sm font-medium mb-2"
+                        >Trip Name</label
+                    >
+                    <div class="relative">
+                        <div
+                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                        >
+                            <i class="fas fa-suitcase text-gray-400"></i>
+                        </div>
+                        <input
+                            type="text"
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            id="name"
+                            name="name"
+                            required
+                            placeholder="Enter trip name (e.g., Summer Vacation)"
+                        />
+                    </div>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Give your trip a memorable name
+                    </p>
+                </div>
 
-{% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Create New Trip</h3>
+                <div>
+                    <label
+                        for="description"
+                        class="block text-sm font-medium mb-2"
+                        >Description</label
+                    >
+                    <div class="relative">
+                        <div
+                            class="absolute inset-y-0 top-0 left-0 pl-3 pt-3 flex items-start pointer-events-none"
+                        >
+                            <i class="fas fa-align-left text-gray-400"></i>
+                        </div>
+                        <textarea
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            id="description"
+                            name="description"
+                            rows="4"
+                            placeholder="Describe your trip... Where are you going? Who are you traveling with?"
+                        ></textarea>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Add details about your trip to help organize expenses
+                    </p>
                 </div>
-                <div class="card-body">
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Trip Name</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label
+                            for="start_date"
+                            class="block text-sm font-medium mb-2"
+                            >Start Date</label
+                        >
+                        <div class="relative">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                            >
+                                <i
+                                    class="fas fa-calendar-start text-gray-400"
+                                ></i>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date" required>
+                            <input
+                                type="date"
+                                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                id="start_date"
+                                name="start_date"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            for="end_date"
+                            class="block text-sm font-medium mb-2"
+                            >End Date</label
+                        >
+                        <div class="relative">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                            >
+                                <i
+                                    class="fas fa-calendar-end text-gray-400"
+                                ></i>
                             </div>
+                            <input
+                                type="date"
+                                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                id="end_date"
+                                name="end_date"
+                                required
+                            />
                         </div>
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{{ url_for('trips.list_trips') }}" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Create Trip</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <div
+                    class="flex flex-col sm:flex-row sm:justify-end pt-6 space-y-3 sm:space-y-0 sm:space-x-3"
+                >
+                    <a
+                        href="{{ url_for('trips.list_trips') }}"
+                        class="btn-secondary inline-flex items-center justify-center"
+                    >
+                        <i class="fas fa-times mr-2"></i>
+                        Cancel
+                    </a>
+                    <button
+                        type="submit"
+                        class="btn-primary inline-flex items-center justify-center"
+                    >
+                        <i class="fas fa-plus mr-2"></i>
+                        Create Trip
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

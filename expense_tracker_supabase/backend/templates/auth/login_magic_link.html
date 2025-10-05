@@ -1,47 +1,57 @@
-{% extends "base.html" %}
-
-{% block title %}Login with Magic Link - Expense Tracker{% endblock %}
-
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="text-center">Login with Magic Link</h3>
+{% extends "base.html" %} {% block title %}Login with Magic Link - Expense
+Tracker{% endblock %} {% block content %}
+<div class="max-w-md mx-auto mt-8">
+    <div class="card shadow-xl">
+        <div class="px-6 py-8">
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-bold">Login with Magic Link</h3>
+                <p class="text-sm text-gray-600 mt-2">
+                    We'll send you a magic link to log in without a password.
+                </p>
             </div>
-            <div class="card-body">
-                <p class="text-center text-muted">We'll send you a magic link to log in without a password.</p>
-                
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane me-2"></i>Send Magic Link
-                        </button>
-                    </div>
-                </form>
-                
-                <div class="text-center mt-3">
-                    <p class="mb-0">
-                        or
-                    </p>
+
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium mb-2"
+                        >Email Address</label
+                    >
+                    <input
+                        type="email"
+                        class="block w-full py-3 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        id="email"
+                        name="email"
+                        required
+                        placeholder="Enter your email"
+                    />
                 </div>
-                
-                <div class="d-grid mt-3">
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login with Password
-                    </a>
+
+                <div>
+                    <button
+                        type="submit"
+                        class="btn-primary w-full flex justify-center"
+                    >
+                        <i class="fas fa-paper-plane mr-2"></i>Send Magic Link
+                    </button>
                 </div>
-                
-                <div class="text-center mt-3">
-                    <p class="mb-0">
-                        Don't have an account?
-                        <a href="{{ url_for('auth.register') }}">Register</a>
-                    </p>
-                </div>
+            </form>
+
+            <div class="text-center mt-6">
+                <a
+                    href="{{ url_for('auth.login') }}"
+                    class="text-sm text-blue-600 hover:underline"
+                    >Login with Password</a
+                >
+            </div>
+
+            <div class="text-center mt-3">
+                <p class="text-sm">
+                    Don't have an account?
+                    <a
+                        href="{{ url_for('auth.register') }}"
+                        class="text-blue-600 hover:underline"
+                        >Register</a
+                    >
+                </p>
             </div>
         </div>
     </div>

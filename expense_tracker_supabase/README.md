@@ -1,155 +1,108 @@
-# Expense Tracker Application
+# Expense Tracker with Supabase Integration
 
-A comprehensive expense tracking application with Supabase authentication.
-
-## Setup Instructions
-
-### Prerequisites
-- Python 3.7 or higher
-- pip (Python package installer)
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd expense_tracker
-   ```
-
-2. Install required Python packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   
-   Or install packages individually:
-   ```bash
-   pip install flask flask-login python-dotenv supabase
-   ```
-
-### Supabase Setup
-
-1. Create a Supabase account at [https://supabase.com/](https://supabase.com/)
-2. Create a new project:
-   - Click "New Project"
-   - Enter project name (e.g., "expense-tracker")
-   - Set a database password
-   - Select your region
-   - Click "Create Project"
-3. Get your API credentials:
-   - Once project is ready, go to "Project Settings" → "API"
-   - Copy your "Project URL" and "anon" public key
-4. Configure environment variables:
-   - Copy `.env.example` to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - Edit `.env` and replace the placeholder values with your actual Supabase credentials
-
-### Running the Application
-
-```bash
-cd backend
-python app.py
-```
-
-The application will be available at `http://localhost:5004`
+A modern expense tracking application built with Flask and Supabase, featuring user authentication, trip management, and expense tracking.
 
 ## Features
 
-- User authentication (email/password and magic link)
-- Expense tracking with categories
-- Trip management
-- Dashboard with expense analytics
-- Responsive design
+✅ **User Authentication**
+- Email/password registration and login
+- Magic link (passwordless) authentication
+- User profile management with real names
 
-## Supabase Integration
+✅ **Trip Management**
+- Create and manage trips
+- Add participants to trips
+- View trip details and expenses
 
-This application uses Supabase for authentication. The integration includes:
+✅ **Expense Tracking**
+- Add expenses to trips
+- Split expenses among participants
+- Track balances and settlements
 
-- User registration and login
-- Passwordless authentication with magic links
-- Email verification
-- Session management
-
-## Database
-
-The application uses both:
-- SQLite for local data storage (expenses, trips, etc.)
-- Supabase for user authentication
-
-For a complete Supabase database setup with all tables, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
-
-For a complete migration to Supabase (moving everything to Supabase), see:
-- [SUPABASE_COMPLETE_INTEGRATION.md](SUPABASE_COMPLETE_INTEGRATION.md)
-- [SUPABASE_PHASED_IMPLEMENTATION.md](SUPABASE_PHASED_IMPLEMENTATION.md)
+✅ **Dashboard Features**
+- User profile management
+- Sync expenses button to recalculate all expenses for admin trips
 
 ## Project Structure
 
 ```
-expense_tracker/
-├── backend/
-│   ├── app.py              # Application entry point
-│   ├── app_factory.py      # Flask app factory
-│   ├── config.py           # Configuration settings
-│   ├── database.py         # Database initialization
-│   ├── models/             # Database models
-│   ├── routes/             # Route handlers
-│   ├── supabase_client.py  # Supabase client wrapper
-│   ├── supabase_schema.sql # Supabase database schema
-│   ├── supabase_complete_schema.sql # Complete Supabase schema
-│   ├── migrate_to_supabase.py # Data migration script
-│   └── templates/          # HTML templates
-└── README.md
+expense_tracker_supabase/
+├── backend/              # Main application code
+│   ├── app.py           # Flask application entry point
+│   ├── database.py      # Supabase database service
+│   ├── models/          # Data models
+│   ├── routes/          # API routes
+│   └── templates/       # HTML templates
+├── docs/                # Documentation
+├── scripts/             # Utility scripts
+└── supabase/            # Supabase configuration and migrations
 ```
 
-## Environment Variables
+## Getting Started
 
-Create a `.env` file in the backend directory with the following variables:
+### Prerequisites
 
-```
-FLASK_APP=app.py
-FLASK_DEBUG=True
-DATABASE_URL=sqlite:///app.db
-PORT=5004
+- Python 3.8+
+- Supabase account and project
 
-# Supabase Configuration
-SUPABASE_URL=your_supabase_project_url_here
-SUPABASE_KEY=your_supabase_project_api_key_here
+### Installation
 
-# Flask Configuration
-SECRET_KEY=your_secret_key_here
-```
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
 
-## Testing
+3. Set up environment variables in `.env`:
+   ```env
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_KEY=your_service_role_key
+   SECRET_KEY=your_flask_secret_key
+   ```
 
-To test the Supabase connection, run:
+4. Apply database schema:
+   ```bash
+   cd supabase
+   supabase link --project-ref your_project_id
+   supabase db push
+   ```
 
-```bash
-cd backend
-python test_supabase.py
-```
+5. Run the application:
+   ```bash
+   cd backend
+   python app.py
+   ```
 
-## Complete Supabase Database Setup
+## Current Status
 
-For detailed instructions on setting up all tables in Supabase, including:
+✅ **Phase 1 Complete:**
+- User authentication (email/password and magic link)
+- Trip creation and management
+- Basic expense tracking
+- Dashboard with sync functionality
 
-- Creating all necessary tables (users, trips, expenses, unregistered_participants)
-- Setting up Row Level Security (RLS)
-- Migrating existing data from SQLite
-- Configuring security policies
+## Next Steps
 
-See the complete guide in [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
+🔜 **Phase 2 Planned:**
+- Advanced expense features
+- Settlement calculations
+- Enhanced dashboard
+- Data visualization
 
-## Complete Migration to Supabase
+## Documentation
 
-For detailed instructions on moving everything to Supabase, including:
+See `docs/` folder for detailed documentation:
+- [Supabase Integration Guide](docs/SUPABASE_INTEGRATION.md)
+- [Setup Instructions](docs/SUPABASE_SETUP.md)
+- [Phased Implementation Plan](docs/SUPABASE_PHASED_IMPLEMENTATION.md)
 
-- Phased implementation approach
-- Authentication migration
-- Data migration
-- Feature enhancement
-- Deployment considerations
+## Scripts
 
-See:
-- [SUPABASE_COMPLETE_INTEGRATION.md](SUPABASE_COMPLETE_INTEGRATION.md)
-- [SUPABASE_PHASED_IMPLEMENTATION.md](SUPABASE_PHASED_IMPLEMENTATION.md)
+Utility scripts are available in the `scripts/` folder for:
+- Database schema management
+- Testing and debugging
+- Setup and configuration
+
+## License
+
+This project is for educational purposes.

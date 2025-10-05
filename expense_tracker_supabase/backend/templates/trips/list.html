@@ -1,40 +1,95 @@
-{% extends "base.html" %}
-
-{% block title %}My Trips - Expense Tracker{% endblock %}
-
-{% block content %}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>My Trips</h2>
-        <a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Create New Trip
-        </a>
+{% extends "base.html" %} {% block title %}My Trips - Expense Tracker{% endblock
+%} {% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="sm:flex sm:items-center sm:justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold">My Trips</h1>
+            <p class="mt-1 text-sm text-gray-600">
+                Manage your trips and track expenses
+            </p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <a
+                href="{{ url_for('trips.create_trip') }}"
+                class="btn-primary inline-flex items-center"
+            >
+                <i class="fas fa-plus mr-2"></i>
+                Create New Trip
+            </a>
+        </div>
     </div>
-    
+
     {% if trips %}
-        <div class="row">
-            {% for trip in trips %}
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ trip.name }}</h5>
-                        <p class="card-text">{{ trip.description or 'No description' }}</p>
-                        <p class="card-text">
-                            <small class="text-muted">
-                                {{ trip.start_date.strftime('%b %d, %Y') }} - {{ trip.end_date.strftime('%b %d, %Y') }}
-                            </small>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for trip in trips %}
+        <div class="card hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-bold">{{ trip.name }}</h3>
+                        <p class="mt-1 text-sm text-gray-600">
+                            {{ trip.description or 'No description' }}
                         </p>
-                        <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-primary">View Trip</a>
+                    </div>
+                    <div class="flex-shrink-0 ml-4">
+                        <div
+                            class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center"
+                        >
+                            <i class="fas fa-suitcase text-white"></i>
+                        </div>
                     </div>
                 </div>
+
+                <div class="mt-4 flex items-center text-sm text-gray-500">
+                    <i class="fas fa-calendar mr-2"></i>
+                    <span
+                        >{{ trip.start_date.strftime('%b %d, %Y') }} - {{
+                        trip.end_date.strftime('%b %d, %Y') }}</span
+                    >
+                </div>
+
+                <div class="mt-4 flex items-center text-sm text-gray-500">
+                    <i class="fas fa-receipt mr-2"></i>
+                    <span
+                        >{{ trip.expenses_count if trip.expenses_count else 0 }}
+                        expenses</span
+                    >
+                </div>
+
+                <div class="mt-6">
+                    <a
+                        href="{{ url_for('trips.view_trip', trip_id=trip.id) }}"
+                        class="btn-primary inline-flex items-center"
+                    >
+                        <i class="fas fa-eye mr-2"></i>
+                        View Trip
+                    </a>
+                </div>
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
+    </div>
     {% else %}
-        <div class="text-center">
-            <p>You don't have any trips yet.</p>
-            <a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary">Create Your First Trip</a>
+    <div class="text-center py-16 card">
+        <div
+            class="mx-auto h-24 w-24 rounded-full bg-blue-500 flex items-center justify-center mb-6"
+        >
+            <i class="fas fa-suitcase text-white text-4xl"></i>
         </div>
+        <h3 class="mt-2 text-2xl font-bold">No trips yet</h3>
+        <p class="mt-2 text-sm text-gray-600 max-w-md mx-auto">
+            Get started by creating your first trip to track expenses.
+        </p>
+        <div class="mt-8">
+            <a
+                href="{{ url_for('trips.create_trip') }}"
+                class="btn-primary inline-flex items-center"
+            >
+                <i class="fas fa-plus mr-3"></i>
+                Create Your First Trip
+            </a>
+        </div>
+    </div>
     {% endif %}
 </div>
 {% endblock %}
